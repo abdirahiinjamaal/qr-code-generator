@@ -16,6 +16,8 @@ export default function Home() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [generatedLink, setGeneratedLink] = useState<string | null>(null)
+  const [qrValue, setQrValue] = useState<string | null>(null)
+  const [activeSource, setActiveSource] = useState<string | null>(null)
   const [user, setUser] = useState<any>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [showIos, setShowIos] = useState(true)
@@ -23,6 +25,14 @@ export default function Home() {
   const [showWeb, setShowWeb] = useState(true)
   const router = useRouter()
 
+  useEffect(() => {
+    if (generatedLink) {
+      setQrValue(generatedLink)
+      setActiveSource(null)
+    }
+  }, [generatedLink])
+
+  // ... (keep existing useEffect for auth)
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -49,6 +59,7 @@ export default function Home() {
     return () => subscription.unsubscribe()
   }, [])
 
+  // ... (keep existing helper functions)
   const isSafeUrl = (url: string): boolean => {
     if (!url) return true // Allow empty URLs
     try {
@@ -170,6 +181,22 @@ export default function Home() {
   const handleLogout = async () => {
     await supabase.auth.signOut()
     setGeneratedLink(null)
+    setQrValue(null)
+    setActiveSource(null)
+  }
+
+  const handleSourceClick = (source: string) => {
+    if (!generatedLink) return
+    const newLink = `${generatedLink}?s=${source}`
+    setQrValue(newLink)
+    setActiveSource(source)
+    navigator.clipboard.writeText(newLink)
+  }
+
+  const handleResetSource = () => {
+    if (!generatedLink) return
+    setQrValue(generatedLink)
+    setActiveSource(null)
   }
 
   return (
@@ -377,12 +404,12 @@ export default function Home() {
             </form>
           </div>
 
-          {generatedLink && (
+          {qrValue && (
             <div className="bg-gray-50 p-8 border-t border-gray-100">
               <div className="flex flex-col items-center space-y-6">
                 <div className="bg-white p-4 rounded-xl shadow-sm">
                   <QRCodeSVG
-                    value={generatedLink}
+                    value={qrValue}
                     size={200}
                     level="H"
                     imageSettings={logoPreview ? {
@@ -397,18 +424,18 @@ export default function Home() {
                 </div>
                 <div className="w-full max-w-md">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Your Universal Link
+                    {activeSource ? `Your ${activeSource.charAt(0).toUpperCase() + activeSource.slice(1)} Link` : 'Your Universal Link'}
                   </label>
                   <div className="flex gap-2 mb-6">
                     <input
                       type="text"
                       readOnly
-                      value={generatedLink}
+                      value={qrValue}
                       className="flex-1 px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-600 focus:outline-none"
                     />
                     <button
                       onClick={() => {
-                        navigator.clipboard.writeText(generatedLink)
+                        navigator.clipboard.writeText(qrValue)
                         alert('Link copied!')
                       }}
                       className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
@@ -418,61 +445,53 @@ export default function Home() {
                   </div>
 
                   <div className="border-t border-gray-200 pt-6">
-                    <h3 className="text-sm font-bold text-gray-900 mb-3">Campaign Links</h3>
-                    <p className="text-xs text-gray-500 mb-4">Click to copy tracking links for specific platforms:</p>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-bold text-gray-900">Campaign Links</h3>
+                      {activeSource && (
+                        <button
+                          onClick={handleResetSource}
+                          className="text-xs text-[#ff6602] hover:text-[#e65a02] font-medium"
+                        >
+                          Reset to Universal
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mb-4">Click a platform to generate a specific QR code & link:</p>
 
                     <div className="grid grid-cols-2 gap-3">
                       <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(`${generatedLink}?s=tiktok`)
-                          alert('TikTok link copied!')
-                        }}
-                        className="flex items-center justify-center gap-2 px-3 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-sm"
+                        onClick={() => handleSourceClick('tiktok')}
+                        className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all text-sm ${activeSource === 'tiktok' ? 'bg-black text-white ring-2 ring-[#ff6602] ring-offset-2' : 'bg-black/90 text-white hover:bg-black'}`}
                       >
                         <Smartphone className="w-4 h-4" /> TikTok
                       </button>
                       <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(`${generatedLink}?s=facebook`)
-                          alert('Facebook link copied!')
-                        }}
-                        className="flex items-center justify-center gap-2 px-3 py-2 bg-[#1877F2] text-white rounded-lg hover:bg-[#166fe5] transition-colors text-sm"
+                        onClick={() => handleSourceClick('facebook')}
+                        className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all text-sm ${activeSource === 'facebook' ? 'bg-[#1877F2] text-white ring-2 ring-[#ff6602] ring-offset-2' : 'bg-[#1877F2]/90 text-white hover:bg-[#1877F2]'}`}
                       >
                         <Globe className="w-4 h-4" /> Facebook
                       </button>
                       <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(`${generatedLink}?s=instagram`)
-                          alert('Instagram link copied!')
-                        }}
-                        className="flex items-center justify-center gap-2 px-3 py-2 bg-[#E4405F] text-white rounded-lg hover:bg-[#d63c59] transition-colors text-sm"
+                        onClick={() => handleSourceClick('instagram')}
+                        className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all text-sm ${activeSource === 'instagram' ? 'bg-[#E4405F] text-white ring-2 ring-[#ff6602] ring-offset-2' : 'bg-[#E4405F]/90 text-white hover:bg-[#E4405F]'}`}
                       >
                         <Smartphone className="w-4 h-4" /> Instagram
                       </button>
                       <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(`${generatedLink}?s=youtube`)
-                          alert('YouTube link copied!')
-                        }}
-                        className="flex items-center justify-center gap-2 px-3 py-2 bg-[#FF0000] text-white rounded-lg hover:bg-[#e60000] transition-colors text-sm"
+                        onClick={() => handleSourceClick('youtube')}
+                        className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all text-sm ${activeSource === 'youtube' ? 'bg-[#FF0000] text-white ring-2 ring-[#ff6602] ring-offset-2' : 'bg-[#FF0000]/90 text-white hover:bg-[#FF0000]'}`}
                       >
                         <Globe className="w-4 h-4" /> YouTube
                       </button>
                       <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(`${generatedLink}?s=whatsapp`)
-                          alert('WhatsApp link copied!')
-                        }}
-                        className="flex items-center justify-center gap-2 px-3 py-2 bg-[#25D366] text-white rounded-lg hover:bg-[#22bf5b] transition-colors text-sm"
+                        onClick={() => handleSourceClick('whatsapp')}
+                        className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all text-sm ${activeSource === 'whatsapp' ? 'bg-[#25D366] text-white ring-2 ring-[#ff6602] ring-offset-2' : 'bg-[#25D366]/90 text-white hover:bg-[#25D366]'}`}
                       >
                         <Smartphone className="w-4 h-4" /> WhatsApp
                       </button>
                       <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(`${generatedLink}?s=telegram`)
-                          alert('Telegram link copied!')
-                        }}
-                        className="flex items-center justify-center gap-2 px-3 py-2 bg-[#0088cc] text-white rounded-lg hover:bg-[#007ebd] transition-colors text-sm"
+                        onClick={() => handleSourceClick('telegram')}
+                        className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all text-sm ${activeSource === 'telegram' ? 'bg-[#0088cc] text-white ring-2 ring-[#ff6602] ring-offset-2' : 'bg-[#0088cc]/90 text-white hover:bg-[#0088cc]'}`}
                       >
                         <Smartphone className="w-4 h-4" /> Telegram
                       </button>
@@ -482,7 +501,7 @@ export default function Home() {
 
                 <div className="flex gap-4 mt-6">
                   <a
-                    href={generatedLink}
+                    href={qrValue}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 text-[#ff6602] hover:text-[#e65a02] font-medium"
@@ -501,6 +520,11 @@ export default function Home() {
             </div>
           )}
         </div>
+      </div>
+    </main>
+  )
+}
+        </div >
       </div >
     </main >
   )
