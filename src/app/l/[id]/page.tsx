@@ -102,7 +102,7 @@ export default function RedirectPage() {
             <div className="w-full max-w-md space-y-8 relative z-10">
                 <div className="text-center">
                     <h1 className="text-3xl font-bold text-white mb-2 drop-shadow-lg">{linkData.title}</h1>
-                    <p className="text-white/90 drop-shadow">Choose your platform to continue</p>
+                    <p className="text-white/90 drop-shadow">Kala soo Deg Appka Caawiye Playstoreka ama App Storeka</p>
                 </div>
 
                 <div className="space-y-4">
