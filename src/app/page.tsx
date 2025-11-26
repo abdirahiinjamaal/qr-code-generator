@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { QRCodeSVG } from 'qrcode.react'
 import { supabase, isUserAdmin } from '@/lib/supabase'
-import { Loader2, Smartphone, Globe, Link as LinkIcon, LogOut, ShieldAlert } from 'lucide-react'
+import { Loader2, Smartphone, Globe, Link as LinkIcon, LogOut, ShieldAlert, LayoutDashboard } from 'lucide-react'
 
 import { User } from '@supabase/supabase-js'
 
@@ -216,6 +216,13 @@ export default function Home() {
                   </span>
                 )}
               </div>
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#ff6602] bg-[#ff6602]/10 rounded-lg hover:bg-[#ff6602]/20 transition-colors"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Dashboard
+              </button>
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:text-gray-900 transition-colors"
