@@ -324,7 +324,19 @@ export default function Home() {
             <div className="bg-gray-50 p-8 border-t border-gray-100">
               <div className="flex flex-col items-center space-y-6">
                 <div className="bg-white p-4 rounded-xl shadow-sm">
-                  <QRCodeSVG value={generatedLink} size={200} />
+                  <QRCodeSVG
+                    value={generatedLink}
+                    size={200}
+                    level="H"
+                    imageSettings={logoPreview ? {
+                      src: logoPreview,
+                      x: undefined,
+                      y: undefined,
+                      height: 40,
+                      width: 40,
+                      excavate: true,
+                    } : undefined}
+                  />
                 </div>
 
                 <div className="w-full max-w-md">
