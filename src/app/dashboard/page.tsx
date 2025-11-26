@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import * as XLSX from 'xlsx'
@@ -78,6 +78,11 @@ export default function Dashboard() {
                     return
                 }
 
+                // Optimized: Fetch only clicks from last 30 days for better performance
+                const thirtyDaysAgo = new Date()
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+                const cutoffDate = thirtyDaysAgo.toISOString()
+
                 const { data, error } = await supabase
                     .from('links')
                     .select(`
@@ -91,7 +96,7 @@ export default function Dashboard() {
                         show_ios,
                         show_android,
                         show_web,
-                        clicks (
+                        clicks!inner (
                             platform,
                             source,
                             country,
@@ -100,7 +105,9 @@ export default function Dashboard() {
                         )
                     `)
                     .eq('user_id', session.user.id)
+                    .gte('clicks.created_at', cutoffDate)
                     .order('created_at', { ascending: false })
+                    .limit(50) // Limit to 50 most recent links
 
                 if (error) throw error
                 setLinks(data || [])
@@ -314,33 +321,33 @@ export default function Dashboard() {
         link.click()
     }
 
-    // Calculate aggregate stats
-    const totalClicks = links.reduce((sum, link) => sum + link.clicks.length, 0)
+    // Calculate aggregate stats with memoization for performance
+    const totalClicks = useMemo(() => links.reduce((sum, link) => sum + link.clicks.length, 0), [links])
     const totalLinks = links.length
 
-    const platformStats = links.reduce((acc, link) => {
+    const platformStats = useMemo(() => links.reduce((acc, link) => {
         link.clicks.forEach(click => {
             acc[click.platform] = (acc[click.platform] || 0) + 1
         })
         return acc
-    }, {} as Record<string, number>)
+    }, {} as Record<string, number>), [links])
 
-    const pieData = [
+    const pieData = useMemo(() => [
         { name: 'iOS', value: platformStats['ios'] || 0, color: '#000000' },
         { name: 'Android', value: platformStats['android'] || 0, color: '#3DDC84' },
         { name: 'Web', value: platformStats['web'] || 0, color: '#007fff' },
-    ].filter(d => d.value > 0)
+    ].filter(d => d.value > 0), [platformStats])
 
     // Calculate source stats
-    const sourceStats = links.reduce((acc, link) => {
+    const sourceStats = useMemo(() => links.reduce((acc, link) => {
         link.clicks.forEach(click => {
             const source = click.source || 'direct'
             acc[source] = (acc[source] || 0) + 1
         })
         return acc
-    }, {} as Record<string, number>)
+    }, {} as Record<string, number>), [links])
 
-    const barData = Object.entries(sourceStats)
+    const barData = useMemo(() => Object.entries(sourceStats)
         .map(([name, value]) => ({
             name: name.charAt(0).toUpperCase() + name.slice(1),
             value,
@@ -351,10 +358,10 @@ export default function Dashboard() {
                             name === 'whatsapp' ? '#25D366' :
                                 name === 'telegram' ? '#0088cc' : '#888888'
         }))
-        .sort((a, b) => b.value - a.value)
+        .sort((a, b) => b.value - a.value), [sourceStats])
 
     // Calculate clicks over time (last 7 days)
-    const clicksOverTime = Array.from({ length: 7 }, (_, i) => {
+    const clicksOverTime = useMemo(() => Array.from({ length: 7 }, (_, i) => {
         const d = new Date()
         d.setDate(d.getDate() - i)
         return d.toISOString().split('T')[0]
@@ -363,31 +370,61 @@ export default function Dashboard() {
             return sum + link.clicks.filter(c => c.created_at.startsWith(date)).length
         }, 0)
         return { date: new Date(date).toLocaleDateString('en-US', { weekday: 'short' }), count }
-    })
+    }), [links])
 
     // Calculate location stats
-    const locationStats = links.reduce((acc, link) => {
+    const locationStats = useMemo(() => links.reduce((acc, link) => {
         link.clicks.forEach(click => {
             const country = click.country || 'Unknown'
             acc[country] = (acc[country] || 0) + 1
         })
         return acc
-    }, {} as Record<string, number>)
+    }, {} as Record<string, number>), [links])
 
-    const locationData = Object.entries(locationStats)
+    const locationData = useMemo(() => Object.entries(locationStats)
         .map(([name, value]) => ({
             name,
             value,
             color: '#8884d8'
         }))
         .sort((a, b) => b.value - a.value)
-        .slice(0, 5)
+        .slice(0, 5), [locationStats])
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <Loader2 className="w-8 h-8 animate-spin text-[#ff6602]" />
-            </div>
+            <main className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto space-y-8">
+                    {/* Header Skeleton */}
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <div className="h-8 w-64 bg-gray-200 rounded animate-pulse"></div>
+                            <div className="h-4 w-48 bg-gray-200 rounded animate-pulse mt-2"></div>
+                        </div>
+                        <div className="flex gap-3">
+                            <div className="h-10 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
+                            <div className="h-10 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
+                            <div className="h-10 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
+                        </div>
+                    </div>
+
+                    {/* Stats Cards Skeleton */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {[1, 2, 3, 4].map(i => (
+                            <div key={i} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                                <div className="h-12 w-12 bg-gray-200 rounded-lg animate-pulse mb-4"></div>
+                                <div className="h-8 w-20 bg-gray-200 rounded animate-pulse mb-2"></div>
+                                <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Chart Skeleton */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <div className="h-6 w-48 bg-gray-200 rounded animate-pulse mb-6"></div>
+                        <div className="h-[350px] bg-gray-100 rounded animate-pulse"></div>
+                    </div>
+                </div>
+            </main>
         )
     }
 
