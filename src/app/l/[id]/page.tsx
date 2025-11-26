@@ -84,9 +84,9 @@ export default function RedirectPage() {
 
     return (
         <main className="min-h-screen relative overflow-hidden flex flex-col items-center justify-center p-4">
-            {/* Animated Gradient Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[#ff6602] via-[#007fff] to-[#ff6602] animate-gradient-xy"></div>
-            <div className="absolute inset-0 bg-gradient-to-tr from-[#007fff] via-transparent to-[#ff6602] opacity-50 animate-gradient-slow"></div>
+            {/* Animated Gradient Background - Orange Dominant */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#ff6602] via-[#ff6602] to-[#ff8c3a] animate-gradient-xy"></div>
+            <div className="absolute inset-0 bg-gradient-to-tr from-[#ff6602] via-[#ff8c3a] to-[#007fff] opacity-40 animate-gradient-slow"></div>
 
             {/* Floating E-commerce Icons */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
