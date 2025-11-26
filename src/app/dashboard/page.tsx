@@ -1,10 +1,9 @@
 
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import * as XLSX from 'xlsx'
 import {
     Loader2,
     ExternalLink,
@@ -78,11 +77,6 @@ export default function Dashboard() {
                     return
                 }
 
-                // Optimized: Fetch only clicks from last 30 days for better performance
-                const thirtyDaysAgo = new Date()
-                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-                const cutoffDate = thirtyDaysAgo.toISOString()
-
                 const { data, error } = await supabase
                     .from('links')
                     .select(`
@@ -96,7 +90,7 @@ export default function Dashboard() {
                         show_ios,
                         show_android,
                         show_web,
-                        clicks!inner (
+                        clicks (
                             platform,
                             source,
                             country,
@@ -105,9 +99,7 @@ export default function Dashboard() {
                         )
                     `)
                     .eq('user_id', session.user.id)
-                    .gte('clicks.created_at', cutoffDate)
                     .order('created_at', { ascending: false })
-                    .limit(50) // Limit to 50 most recent links
 
                 if (error) throw error
                 setLinks(data || [])
@@ -182,120 +174,7 @@ export default function Dashboard() {
         }
     }
 
-    const handleExportExcel = () => {
-        // Create workbook
-        const wb = XLSX.utils.book_new()
-
-        // 1. Summary Sheet
-        const summaryData = [
-            ['QR Code Analytics Report'],
-            ['Generated:', new Date().toLocaleString()],
-            [''],
-            ['Overview'],
-            ['Total Links', totalLinks],
-            ['Total Clicks', totalClicks],
-            ['Average Clicks per Link', totalLinks > 0 ? (totalClicks / totalLinks).toFixed(2) : 0],
-            [''],
-            ['Platform Distribution'],
-            ['iOS Clicks', platformStats['ios'] || 0],
-            ['Android Clicks', platformStats['android'] || 0],
-            ['Web Clicks', platformStats['web'] || 0],
-            [''],
-            ['Top Sources'],
-            ...barData.slice(0, 5).map(s => [s.name, s.value]),
-            [''],
-            ['Top Countries'],
-            ...locationData.slice(0, 5).map(l => [l.name, l.value])
-        ]
-        const summarySheet = XLSX.utils.aoa_to_sheet(summaryData)
-        summarySheet['!cols'] = [{ wch: 25 }, { wch: 15 }]
-        XLSX.utils.book_append_sheet(wb, summarySheet, 'Summary')
-
-        // 2. Links Sheet
-        const linksData = [
-            ['Link ID', 'Title', 'Description', 'Created Date', 'Total Clicks', 'iOS Clicks', 'Android Clicks', 'Web Clicks', 'Link URL'],
-            ...links.map(link => {
-                const ios = link.clicks.filter(c => c.platform === 'ios').length
-                const android = link.clicks.filter(c => c.platform === 'android').length
-                const web = link.clicks.filter(c => c.platform === 'web').length
-                return [
-                    link.id,
-                    link.title,
-                    link.description || '',
-                    new Date(link.created_at).toLocaleDateString(),
-                    link.clicks.length,
-                    ios,
-                    android,
-                    web,
-                    `${window.location.origin}/l/${link.id}`
-                ]
-            })
-        ]
-        const linksSheet = XLSX.utils.aoa_to_sheet(linksData)
-        linksSheet['!cols'] = [
-            { wch: 10 }, { wch: 20 }, { wch: 30 }, { wch: 12 },
-            { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 40 }
-        ]
-        XLSX.utils.book_append_sheet(wb, linksSheet, 'Links')
-
-        // 3. Detailed Clicks Sheet
-        const clicksData = [
-            ['Link Title', 'Click Date', 'Platform', 'Source', 'Country', 'City'],
-            ...links.flatMap(link =>
-                link.clicks.map(click => [
-                    link.title,
-                    new Date(click.created_at).toLocaleString(),
-                    click.platform,
-                    click.source || 'direct',
-                    click.country || 'Unknown',
-                    click.city || 'Unknown'
-                ])
-            )
-        ]
-        const clicksSheet = XLSX.utils.aoa_to_sheet(clicksData)
-        clicksSheet['!cols'] = [{ wch: 20 }, { wch: 20 }, { wch: 12 }, { wch: 15 }, { wch: 15 }, { wch: 15 }]
-        XLSX.utils.book_append_sheet(wb, clicksSheet, 'All Clicks')
-
-        // 4. Daily Analytics Sheet
-        const dailyData = [
-            ['Date', 'Clicks'],
-            ...clicksOverTime.map(day => [day.date, day.count])
-        ]
-        const dailySheet = XLSX.utils.aoa_to_sheet(dailyData)
-        dailySheet['!cols'] = [{ wch: 15 }, { wch: 10 }]
-        XLSX.utils.book_append_sheet(wb, dailySheet, 'Daily Clicks')
-
-        // 5. Source Analytics Sheet
-        const sourceData = [
-            ['Source', 'Clicks', 'Percentage'],
-            ...barData.map(s => [
-                s.name,
-                s.value,
-                `${((s.value / totalClicks) * 100).toFixed(1)}%`
-            ])
-        ]
-        const sourceSheet = XLSX.utils.aoa_to_sheet(sourceData)
-        sourceSheet['!cols'] = [{ wch: 15 }, { wch: 10 }, { wch: 12 }]
-        XLSX.utils.book_append_sheet(wb, sourceSheet, 'Sources')
-
-        // 6. Location Analytics Sheet
-        const locationAnalyticsData = [
-            ['Country', 'Clicks', 'Percentage'],
-            ...locationData.map(l => [
-                l.name,
-                l.value,
-                `${((l.value / totalClicks) * 100).toFixed(1)}%`
-            ])
-        ]
-        const locationSheet = XLSX.utils.aoa_to_sheet(locationAnalyticsData)
-        locationSheet['!cols'] = [{ wch: 20 }, { wch: 10 }, { wch: 12 }]
-        XLSX.utils.book_append_sheet(wb, locationSheet, 'Locations')
-
-        // Export
-        XLSX.writeFile(wb, `QR_Analytics_${new Date().toISOString().split('T')[0]}.xlsx`)
-    }
-
-    const handleExportCSV = () => {
+    const handleExport = () => {
         const csvContent = [
             ['Link Title', 'Created At', 'Total Clicks', 'iOS Clicks', 'Android Clicks', 'Web Clicks', 'Link URL'],
             ...links.map(link => {
@@ -321,33 +200,33 @@ export default function Dashboard() {
         link.click()
     }
 
-    // Calculate aggregate stats with memoization for performance
-    const totalClicks = useMemo(() => links.reduce((sum, link) => sum + link.clicks.length, 0), [links])
+    // Calculate aggregate stats
+    const totalClicks = links.reduce((sum, link) => sum + link.clicks.length, 0)
     const totalLinks = links.length
 
-    const platformStats = useMemo(() => links.reduce((acc, link) => {
+    const platformStats = links.reduce((acc, link) => {
         link.clicks.forEach(click => {
             acc[click.platform] = (acc[click.platform] || 0) + 1
         })
         return acc
-    }, {} as Record<string, number>), [links])
+    }, {} as Record<string, number>)
 
-    const pieData = useMemo(() => [
+    const pieData = [
         { name: 'iOS', value: platformStats['ios'] || 0, color: '#000000' },
         { name: 'Android', value: platformStats['android'] || 0, color: '#3DDC84' },
         { name: 'Web', value: platformStats['web'] || 0, color: '#007fff' },
-    ].filter(d => d.value > 0), [platformStats])
+    ].filter(d => d.value > 0)
 
     // Calculate source stats
-    const sourceStats = useMemo(() => links.reduce((acc, link) => {
+    const sourceStats = links.reduce((acc, link) => {
         link.clicks.forEach(click => {
             const source = click.source || 'direct'
             acc[source] = (acc[source] || 0) + 1
         })
         return acc
-    }, {} as Record<string, number>), [links])
+    }, {} as Record<string, number>)
 
-    const barData = useMemo(() => Object.entries(sourceStats)
+    const barData = Object.entries(sourceStats)
         .map(([name, value]) => ({
             name: name.charAt(0).toUpperCase() + name.slice(1),
             value,
@@ -358,10 +237,10 @@ export default function Dashboard() {
                             name === 'whatsapp' ? '#25D366' :
                                 name === 'telegram' ? '#0088cc' : '#888888'
         }))
-        .sort((a, b) => b.value - a.value), [sourceStats])
+        .sort((a, b) => b.value - a.value)
 
     // Calculate clicks over time (last 7 days)
-    const clicksOverTime = useMemo(() => Array.from({ length: 7 }, (_, i) => {
+    const clicksOverTime = Array.from({ length: 7 }, (_, i) => {
         const d = new Date()
         d.setDate(d.getDate() - i)
         return d.toISOString().split('T')[0]
@@ -370,61 +249,31 @@ export default function Dashboard() {
             return sum + link.clicks.filter(c => c.created_at.startsWith(date)).length
         }, 0)
         return { date: new Date(date).toLocaleDateString('en-US', { weekday: 'short' }), count }
-    }), [links])
+    })
 
     // Calculate location stats
-    const locationStats = useMemo(() => links.reduce((acc, link) => {
+    const locationStats = links.reduce((acc, link) => {
         link.clicks.forEach(click => {
             const country = click.country || 'Unknown'
             acc[country] = (acc[country] || 0) + 1
         })
         return acc
-    }, {} as Record<string, number>), [links])
+    }, {} as Record<string, number>)
 
-    const locationData = useMemo(() => Object.entries(locationStats)
+    const locationData = Object.entries(locationStats)
         .map(([name, value]) => ({
             name,
             value,
             color: '#8884d8'
         }))
         .sort((a, b) => b.value - a.value)
-        .slice(0, 5), [locationStats])
+        .slice(0, 5)
 
     if (loading) {
         return (
-            <main className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-                <div className="max-w-7xl mx-auto space-y-8">
-                    {/* Header Skeleton */}
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <div className="h-8 w-64 bg-gray-200 rounded animate-pulse"></div>
-                            <div className="h-4 w-48 bg-gray-200 rounded animate-pulse mt-2"></div>
-                        </div>
-                        <div className="flex gap-3">
-                            <div className="h-10 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
-                            <div className="h-10 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
-                            <div className="h-10 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
-                        </div>
-                    </div>
-
-                    {/* Stats Cards Skeleton */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                                <div className="h-12 w-12 bg-gray-200 rounded-lg animate-pulse mb-4"></div>
-                                <div className="h-8 w-20 bg-gray-200 rounded animate-pulse mb-2"></div>
-                                <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Chart Skeleton */}
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <div className="h-6 w-48 bg-gray-200 rounded animate-pulse mb-6"></div>
-                        <div className="h-[350px] bg-gray-100 rounded animate-pulse"></div>
-                    </div>
-                </div>
-            </main>
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <Loader2 className="w-8 h-8 animate-spin text-[#ff6602]" />
+            </div>
         )
     }
 
@@ -434,126 +283,456 @@ export default function Dashboard() {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
-                        <p className="text-sm sm:text-base text-gray-500 mt-1">Monitor your QR code performance</p>
+                        <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
+                        <p className="text-gray-500 mt-1">Monitor your QR code performance</p>
                     </div>
-                    <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
-                        <h2 className="text-xl font-bold text-gray-900">Edit Link</h2>
+                    <div className="flex gap-3">
                         <button
-                            onClick={() => setEditingLink(null)}
-                            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                            onClick={handleExport}
+                            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
                         >
-                            <X className="w-5 h-5 text-gray-500" />
+                            <Download className="w-4 h-4" />
+                            Export CSV
                         </button>
+                        <a
+                            href="/"
+                            className="flex items-center gap-2 px-4 py-2 bg-[#ff6602] text-white rounded-xl hover:bg-[#e65a02] transition-colors shadow-sm"
+                        >
+                            <LinkIcon className="w-4 h-4" />
+                            Create New
+                        </a>
                     </div>
-                    <form onSubmit={handleUpdateLink} className="p-6 space-y-6">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">App Name</label>
-                            <input
-                                type="text"
-                                required
-                                value={editingLink.title}
-                                onChange={e => setEditingLink({ ...editingLink, title: e.target.value })}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] focus:border-[#ff6602] text-gray-900"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                            <textarea
-                                value={editingLink.description || ''}
-                                onChange={e => setEditingLink({ ...editingLink, description: e.target.value })}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] focus:border-[#ff6602] text-gray-900"
-                                rows={2}
-                            />
-                        </div>
-
-                        <div className="space-y-4">
-                            <h3 className="font-medium text-gray-900">Platform URLs</h3>
-
-                            <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-                                <div className="pt-2">
-                                    <input
-                                        type="checkbox"
-                                        checked={editingLink.show_ios}
-                                        onChange={e => setEditingLink({ ...editingLink, show_ios: e.target.checked })}
-                                        className="w-4 h-4 text-[#ff6602] rounded focus:ring-[#ff6602]"
-                                    />
-                                </div>
-                                <div className="flex-1">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">iOS App Store URL</label>
-                                    <input
-                                        type="url"
-                                        value={editingLink.ios_url || ''}
-                                        onChange={e => setEditingLink({ ...editingLink, ios_url: e.target.value })}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] text-gray-900"
-                                        placeholder="https://apps.apple.com/..."
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-                                <div className="pt-2">
-                                    <input
-                                        type="checkbox"
-                                        checked={editingLink.show_android}
-                                        onChange={e => setEditingLink({ ...editingLink, show_android: e.target.checked })}
-                                        className="w-4 h-4 text-[#ff6602] rounded focus:ring-[#ff6602]"
-                                    />
-                                </div>
-                                <div className="flex-1">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Android Play Store URL</label>
-                                    <input
-                                        type="url"
-                                        value={editingLink.android_url || ''}
-                                        onChange={e => setEditingLink({ ...editingLink, android_url: e.target.value })}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] text-gray-900"
-                                        placeholder="https://play.google.com/..."
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-                                <div className="pt-2">
-                                    <input
-                                        type="checkbox"
-                                        checked={editingLink.show_web}
-                                        onChange={e => setEditingLink({ ...editingLink, show_web: e.target.checked })}
-                                        className="w-4 h-4 text-[#ff6602] rounded focus:ring-[#ff6602]"
-                                    />
-                                </div>
-                                <div className="flex-1">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Website URL</label>
-                                    <input
-                                        type="url"
-                                        value={editingLink.web_url || ''}
-                                        onChange={e => setEditingLink({ ...editingLink, web_url: e.target.value })}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] text-gray-900"
-                                        placeholder="https://..."
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                            <button
-                                type="button"
-                                onClick={() => setEditingLink(null)}
-                                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={isSubmitting}
-                                className="px-4 py-2 bg-[#ff6602] text-white rounded-lg hover:bg-[#e65a02] transition-colors disabled:opacity-50 flex items-center gap-2"
-                            >
-                                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                                Save Changes
-                            </button>
-                        </div>
-                    </form>
                 </div>
+
+                {/* Tabs */}
+                <div className="flex space-x-1 bg-white p-1 rounded-xl shadow-sm border border-gray-100 w-fit overflow-x-auto">
+                    <button
+                        onClick={() => setActiveTab('overview')}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'overview'
+                                ? 'bg-[#ff6602] text-white shadow-md'
+                                : 'text-gray-600 hover:bg-gray-50'
+                            }`}
+                    >
+                        <LayoutDashboard className="w-4 h-4" />
+                        Overview
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('audience')}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'audience'
+                                ? 'bg-[#ff6602] text-white shadow-md'
+                                : 'text-gray-600 hover:bg-gray-50'
+                            }`}
+                    >
+                        <Users className="w-4 h-4" />
+                        Audience
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('sources')}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'sources'
+                                ? 'bg-[#ff6602] text-white shadow-md'
+                                : 'text-gray-600 hover:bg-gray-50'
+                            }`}
+                    >
+                        <Share2 className="w-4 h-4" />
+                        Sources
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('links')}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'links'
+                                ? 'bg-[#ff6602] text-white shadow-md'
+                                : 'text-gray-600 hover:bg-gray-50'
+                            }`}
+                    >
+                        <LinkIcon className="w-4 h-4" />
+                        Links Manager
+                    </button>
+                </div>
+
+                {/* Tab Content */}
+                {activeTab === 'overview' && (
+                    <div className="space-y-6">
+                        {/* Stats Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="p-2 bg-orange-50 rounded-lg">
+                                        <TrendingUp className="w-6 h-6 text-[#ff6602]" />
+                                    </div>
+                                </div>
+                                <div className="text-3xl font-bold text-gray-900">{totalClicks}</div>
+                                <div className="text-sm text-gray-500">Total Clicks</div>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="p-2 bg-blue-50 rounded-lg">
+                                        <LinkIcon className="w-6 h-6 text-blue-600" />
+                                    </div>
+                                </div>
+                                <div className="text-3xl font-bold text-gray-900">{totalLinks}</div>
+                                <div className="text-sm text-gray-500">Active Links</div>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="p-2 bg-green-50 rounded-lg">
+                                        <Smartphone className="w-6 h-6 text-green-600" />
+                                    </div>
+                                </div>
+                                <div className="text-3xl font-bold text-gray-900">
+                                    {pieData.length > 0 ? pieData.sort((a, b) => b.value - a.value)[0].name : 'N/A'}
+                                </div>
+                                <div className="text-sm text-gray-500">Top Platform</div>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="p-2 bg-purple-50 rounded-lg">
+                                        <Globe className="w-6 h-6 text-purple-600" />
+                                    </div>
+                                </div>
+                                <div className="text-3xl font-bold text-gray-900">
+                                    {locationData.length > 0 ? locationData[0].name : 'N/A'}
+                                </div>
+                                <div className="text-sm text-gray-500">Top Country</div>
+                            </div>
+                        </div>
+
+                        {/* Area Chart */}
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <h3 className="text-lg font-bold text-gray-900 mb-6">Clicks Over Time (Last 7 Days)</h3>
+                            <div className="h-[350px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={clicksOverTime}>
+                                        <defs>
+                                            <linearGradient id="colorClicks" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#ff6602" stopOpacity={0.2} />
+                                                <stop offset="95%" stopColor="#ff6602" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
+                                        <Tooltip
+                                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px -2px rgb(0 0 0 / 0.1)' }}
+                                        />
+                                        <Area type="monotone" dataKey="count" stroke="#ff6602" strokeWidth={3} fillOpacity={1} fill="url(#colorClicks)" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'audience' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Top Countries */}
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <h3 className="text-lg font-bold text-gray-900 mb-6">🌍 Top Countries</h3>
+                            <div className="h-[350px] w-full">
+                                {locationData.length > 0 ? (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={locationData} layout="vertical" margin={{ left: 20 }}>
+                                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
+                                            <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
+                                            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} width={80} />
+                                            <Tooltip
+                                                cursor={{ fill: '#f9fafb' }}
+                                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px -2px rgb(0 0 0 / 0.1)' }}
+                                            />
+                                            <Bar dataKey="value" fill="#8884d8" radius={[0, 8, 8, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <div className="h-full flex items-center justify-center text-gray-400">
+                                        No location data yet
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Platform Distribution */}
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <h3 className="text-lg font-bold text-gray-900 mb-6">📱 Platform Distribution</h3>
+                            <div className="h-[350px] w-full relative">
+                                {pieData.length > 0 ? (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={pieData}
+                                                innerRadius={80}
+                                                outerRadius={110}
+                                                paddingAngle={5}
+                                                dataKey="value"
+                                            >
+                                                {pieData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip
+                                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px -2px rgb(0 0 0 / 0.1)' }}
+                                            />
+                                            <Legend verticalAlign="bottom" height={36} />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                                        No platform data yet
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'sources' && (
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 className="text-lg font-bold text-gray-900 mb-6">🚦 Traffic Sources</h3>
+                        <div className="h-[450px] w-full">
+                            {barData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={barData} layout="vertical" margin={{ left: 20 }}>
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
+                                        <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
+                                        <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} width={100} />
+                                        <Tooltip
+                                            cursor={{ fill: '#f9fafb' }}
+                                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px -2px rgb(0 0 0 / 0.1)' }}
+                                        />
+                                        <Bar dataKey="value" radius={[0, 8, 8, 0]}>
+                                            {barData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="h-full flex items-center justify-center text-gray-400">
+                                    No traffic source data yet
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'links' && (
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="p-6 border-b border-gray-100">
+                            <h3 className="text-lg font-bold text-gray-900">🔗 Your Links</h3>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">App Name</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Clicks</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Platform Split</th>
+                                        <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {links.map((link) => {
+                                        const ios = link.clicks.filter(c => c.platform === 'ios').length
+                                        const android = link.clicks.filter(c => c.platform === 'android').length
+                                        const web = link.clicks.filter(c => c.platform === 'web').length
+                                        const total = link.clicks.length
+
+                                        return (
+                                            <tr key={link.id} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="font-medium text-gray-900">{link.title}</div>
+                                                    <div className="text-xs text-gray-500 truncate max-w-[200px]">
+                                                        {window.location.origin}/l/{link.id}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {new Date(link.created_at).toLocaleDateString()}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="text-sm font-bold text-gray-900">{total}</div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="flex h-2 w-24 rounded-full overflow-hidden bg-gray-100">
+                                                        {total > 0 && (
+                                                            <>
+                                                                <div style={{ width: `${(ios / total) * 100}%` }} className="bg-black" title="iOS" />
+                                                                <div style={{ width: `${(android / total) * 100}%` }} className="bg-[#3DDC84]" title="Android" />
+                                                                <div style={{ width: `${(web / total) * 100}%` }} className="bg-[#007fff]" title="Web" />
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex gap-2 mt-1 text-[10px] text-gray-400">
+                                                        {ios > 0 && <span>iOS: {ios}</span>}
+                                                        {android > 0 && <span>And: {android}</span>}
+                                                        {web > 0 && <span>Web: {web}</span>}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                    <div className="flex justify-end gap-2">
+                                                        <button
+                                                            onClick={() => handleCopy(link.id)}
+                                                            className="p-2 text-gray-400 hover:text-[#007fff] hover:bg-blue-50 rounded-lg transition-colors"
+                                                            title="Copy Link"
+                                                        >
+                                                            {copiedId === link.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                                        </button>
+                                                        <a
+                                                            href={`/l/${link.id}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="p-2 text-gray-400 hover:text-[#ff6602] hover:bg-orange-50 rounded-lg transition-colors"
+                                                            title="Visit Link"
+                                                        >
+                                                            <ExternalLink className="w-4 h-4" />
+                                                        </a>
+                                                        <button
+                                                            onClick={() => setEditingLink(link)}
+                                                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            title="Edit Link"
+                                                        >
+                                                            <Pencil className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDelete(link.id, link.title)}
+                                                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                            title="Delete Link"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
             </div>
+
+            {/* Edit Modal */}
+            {editingLink && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
+                            <h2 className="text-xl font-bold text-gray-900">Edit Link</h2>
+                            <button
+                                onClick={() => setEditingLink(null)}
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <X className="w-5 h-5 text-gray-500" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleUpdateLink} className="p-6 space-y-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">App Name</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={editingLink.title}
+                                    onChange={e => setEditingLink({ ...editingLink, title: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] focus:border-[#ff6602] text-gray-900"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                                <textarea
+                                    value={editingLink.description || ''}
+                                    onChange={e => setEditingLink({ ...editingLink, description: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] focus:border-[#ff6602] text-gray-900"
+                                    rows={2}
+                                />
+                            </div>
+
+                            <div className="space-y-4">
+                                <h3 className="font-medium text-gray-900">Platform URLs</h3>
+
+                                <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
+                                    <div className="pt-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={editingLink.show_ios}
+                                            onChange={e => setEditingLink({ ...editingLink, show_ios: e.target.checked })}
+                                            className="w-4 h-4 text-[#ff6602] rounded focus:ring-[#ff6602]"
+                                        />
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">iOS App Store URL</label>
+                                        <input
+                                            type="url"
+                                            value={editingLink.ios_url || ''}
+                                            onChange={e => setEditingLink({ ...editingLink, ios_url: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] text-gray-900"
+                                            placeholder="https://apps.apple.com/..."
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
+                                    <div className="pt-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={editingLink.show_android}
+                                            onChange={e => setEditingLink({ ...editingLink, show_android: e.target.checked })}
+                                            className="w-4 h-4 text-[#ff6602] rounded focus:ring-[#ff6602]"
+                                        />
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Android Play Store URL</label>
+                                        <input
+                                            type="url"
+                                            value={editingLink.android_url || ''}
+                                            onChange={e => setEditingLink({ ...editingLink, android_url: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] text-gray-900"
+                                            placeholder="https://play.google.com/..."
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
+                                    <div className="pt-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={editingLink.show_web}
+                                            onChange={e => setEditingLink({ ...editingLink, show_web: e.target.checked })}
+                                            className="w-4 h-4 text-[#ff6602] rounded focus:ring-[#ff6602]"
+                                        />
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Website URL</label>
+                                        <input
+                                            type="url"
+                                            value={editingLink.web_url || ''}
+                                            onChange={e => setEditingLink({ ...editingLink, web_url: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] text-gray-900"
+                                            placeholder="https://..."
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingLink(null)}
+                                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="px-4 py-2 bg-[#ff6602] text-white rounded-lg hover:bg-[#e65a02] transition-colors disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             )}
         </main>
     )
