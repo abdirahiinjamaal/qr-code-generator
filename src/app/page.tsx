@@ -158,7 +158,7 @@ export default function Home() {
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
                   placeholder="My Awesome App"
                 />
               </div>
@@ -172,7 +172,7 @@ export default function Home() {
                     type="url"
                     value={iosUrl}
                     onChange={(e) => setIosUrl(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
                     placeholder="https://apps.apple.com/..."
                   />
                 </div>
@@ -185,7 +185,7 @@ export default function Home() {
                     type="url"
                     value={androidUrl}
                     onChange={(e) => setAndroidUrl(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
                     placeholder="https://play.google.com/..."
                   />
                 </div>
@@ -198,7 +198,7 @@ export default function Home() {
                     type="url"
                     value={webUrl}
                     onChange={(e) => setWebUrl(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
                     placeholder="https://example.com"
                   />
                 </div>
