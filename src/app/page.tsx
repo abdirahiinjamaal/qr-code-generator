@@ -395,49 +395,24 @@ export default function Home() {
                     } : undefined}
                   />
                 </div>
-
-                <div className="w-full max-w-md">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Your Universal Link
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      readOnly
-                      value={generatedLink}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
-                    />
-                    <button
-                      onClick={() => navigator.clipboard.writeText(generatedLink)}
-                      className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-medium transition-colors"
-                    >
-                      Copy
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <a
-                    href={generatedLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-[#ff6602] hover:text-[#e65a02] font-medium"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-[#ff6602] hover:text-[#e65a02] font-medium"
                   >
-                    <LinkIcon className="w-4 h-4" />
-                    Test Link
-                  </a>
-                  <a
-                    href="/dashboard"
-                    className="flex items-center gap-2 text-gray-600 hover:text-gray-700 font-medium"
-                  >
-                    View Dashboard
-                  </a>
-                </div>
-              </div>
+                <LinkIcon className="w-4 h-4" />
+                Test Link
+              </a>
+              <a
+                href="/dashboard"
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-700 font-medium"
+              >
+                View Dashboard
+              </a>
             </div>
-          )}
-        </div>
+              </div>
       </div>
-    </main>
+          )}
+    </div>
+      </div >
+    </main >
   )
 }
