@@ -79,7 +79,7 @@ export default function Dashboard() {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                <Loader2 className="w-8 h-8 animate-spin text-[#ff6602]" />
             </div>
         )
     }
@@ -91,7 +91,7 @@ export default function Dashboard() {
                     <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
                     <a
                         href="/"
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        className="px-4 py-2 bg-[#ff6602] text-white rounded-lg hover:bg-[#e65a02] transition-colors"
                     >
                         Create New Link
                     </a>
@@ -131,7 +131,7 @@ export default function Dashboard() {
                                                 href={`/l/${link.id}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-gray-400 hover:text-blue-600 transition-colors"
+                                                className="text-gray-400 hover:text-[#ff6602] transition-colors"
                                                 title="Open link"
                                             >
                                                 <ExternalLink className="w-5 h-5" />

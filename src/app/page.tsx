@@ -113,7 +113,7 @@ export default function Home() {
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">{user.email}</span>
                 {isAdmin && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#ff6602]/10 text-[#ff6602] text-xs font-medium rounded-full">
                     <ShieldAlert className="w-3 h-3" />
                     Admin
                   </span>
@@ -130,7 +130,7 @@ export default function Home() {
           ) : (
             <button
               onClick={() => router.push('/login')}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 bg-[#ff6602] text-white rounded-lg hover:bg-[#e65a02] transition-colors"
             >
               Login
             </button>
@@ -158,7 +158,7 @@ export default function Home() {
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#007fff] focus:border-[#007fff] transition-colors text-gray-900"
                   placeholder="My Awesome App"
                 />
               </div>
@@ -172,7 +172,7 @@ export default function Home() {
                     type="url"
                     value={iosUrl}
                     onChange={(e) => setIosUrl(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#007fff] focus:border-[#007fff] transition-colors text-gray-900"
                     placeholder="https://apps.apple.com/..."
                   />
                 </div>
@@ -185,7 +185,7 @@ export default function Home() {
                     type="url"
                     value={androidUrl}
                     onChange={(e) => setAndroidUrl(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#007fff] focus:border-[#007fff] transition-colors text-gray-900"
                     placeholder="https://play.google.com/..."
                   />
                 </div>
@@ -198,7 +198,7 @@ export default function Home() {
                     type="url"
                     value={webUrl}
                     onChange={(e) => setWebUrl(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#007fff] focus:border-[#007fff] transition-colors text-gray-900"
                     placeholder="https://example.com"
                   />
                 </div>
@@ -207,7 +207,7 @@ export default function Home() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[#ff6602] hover:bg-[#e65a02] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#007fff] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -250,7 +250,7 @@ export default function Home() {
                     href={generatedLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+                    className="flex items-center gap-2 text-[#ff6602] hover:text-[#e65a02] font-medium"
                   >
                     <LinkIcon className="w-4 h-4" />
                     Test Link

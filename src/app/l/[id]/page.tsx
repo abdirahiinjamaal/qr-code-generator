@@ -65,7 +65,7 @@ export default function RedirectPage() {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                <Loader2 className="w-8 h-8 animate-spin text-[#ff6602]" />
             </div>
         )
     }
@@ -120,7 +120,7 @@ export default function RedirectPage() {
                     {linkData.web_url && (
                         <button
                             onClick={() => handleClick('web', linkData.web_url)}
-                            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-transform active:scale-95 shadow-lg"
+                            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-[#007fff] text-white rounded-xl hover:bg-[#006ee6] transition-transform active:scale-95 shadow-lg"
                         >
                             <Globe className="w-6 h-6" />
                             <div className="text-left">
