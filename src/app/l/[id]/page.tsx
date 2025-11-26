@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Loader2, Smartphone, Globe, AlertCircle, Apple } from 'lucide-react'
+import { Loader2, Smartphone, Globe, AlertCircle } from 'lucide-react'
 
 interface LinkData {
     id: string
@@ -55,20 +55,36 @@ export default function RedirectPage() {
         // Get source from URL (e.g. ?s=tiktok) or default to 'direct'
         const source = searchParams.get('s') || 'direct'
 
-        // Log click asynchronously (fire and forget)
+        // 1. Fetch Geolocation (Best effort)
+        let country = 'Unknown'
+        let city = 'Unknown'
+        try {
+            const res = await fetch('https://ipapi.co/json/')
+            if (res.ok) {
+                const data = await res.json()
+                country = data.country_name || 'Unknown'
+                city = data.city || 'Unknown'
+            }
+        } catch (e) {
+            console.error('Failed to fetch location', e)
+        }
+
+        // 2. Log click asynchronously
         supabase
             .from('clicks')
             .insert({
                 link_id: params.id,
                 platform,
-                source, // Save the traffic source
+                source,
+                country,
+                city,
                 user_agent: navigator.userAgent
             })
             .then(({ error }) => {
                 if (error) console.error('Error logging click:', error)
             })
 
-        // Redirect
+        // 3. Redirect
         window.location.href = url
     }
 
