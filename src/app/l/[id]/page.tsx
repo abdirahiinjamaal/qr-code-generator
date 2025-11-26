@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Loader2, Smartphone, Globe, AlertCircle, Apple } from 'lucide-react'
 
@@ -20,6 +20,7 @@ interface LinkData {
 
 export default function RedirectPage() {
     const params = useParams()
+    const searchParams = useSearchParams()
     const [linkData, setLinkData] = useState<LinkData | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -51,12 +52,16 @@ export default function RedirectPage() {
     const handleClick = async (platform: 'ios' | 'android' | 'web', url: string) => {
         if (!url) return
 
+        // Get source from URL (e.g. ?s=tiktok) or default to 'direct'
+        const source = searchParams.get('s') || 'direct'
+
         // Log click asynchronously (fire and forget)
         supabase
             .from('clicks')
             .insert({
                 link_id: params.id,
                 platform,
+                source, // Save the traffic source
                 user_agent: navigator.userAgent
             })
             .then(({ error }) => {
