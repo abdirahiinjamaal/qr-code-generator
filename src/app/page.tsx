@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { QRCodeSVG } from 'qrcode.react'
-import { supabase } from '@/lib/supabase'
-import { Loader2, Smartphone, Globe, Link as LinkIcon, LogOut } from 'lucide-react'
+import { supabase, isUserAdmin } from '@/lib/supabase'
+import { Loader2, Smartphone, Globe, Link as LinkIcon, LogOut, ShieldAlert } from 'lucide-react'
 
 export default function Home() {
   const [iosUrl, setIosUrl] = useState('')
@@ -14,19 +14,30 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const [generatedLink, setGeneratedLink] = useState<string | null>(null)
   const [user, setUser] = useState<any>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null)
+      if (session?.user) {
+        const adminStatus = await isUserAdmin()
+        setIsAdmin(adminStatus)
+      }
     })
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null)
+      if (session?.user) {
+        const adminStatus = await isUserAdmin()
+        setIsAdmin(adminStatus)
+      } else {
+        setIsAdmin(false)
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -37,6 +48,11 @@ export default function Home() {
 
     if (!user) {
       router.push('/login')
+      return
+    }
+
+    if (!isAdmin) {
+      alert('⛔ Access Denied: Only administrators can create QR codes.')
       return
     }
 
@@ -78,7 +94,15 @@ export default function Home() {
         <div className="flex justify-end mb-4">
           {user ? (
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">{user.email}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">{user.email}</span>
+                {isAdmin && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                    <ShieldAlert className="w-3 h-3" />
+                    Admin
+                  </span>
+                )}
+              </div>
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:text-gray-900 transition-colors"
