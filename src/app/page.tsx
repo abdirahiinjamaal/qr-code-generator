@@ -395,23 +395,112 @@ export default function Home() {
                     } : undefined}
                   />
                 </div>
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-[#ff6602] hover:text-[#e65a02] font-medium"
+                <div className="w-full max-w-md">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Your Universal Link
+                  </label>
+                  <div className="flex gap-2 mb-6">
+                    <input
+                      type="text"
+                      readOnly
+                      value={generatedLink}
+                      className="flex-1 px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-600 focus:outline-none"
+                    />
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(generatedLink)
+                        alert('Link copied!')
+                      }}
+                      className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+                    >
+                      <LinkIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="border-t border-gray-200 pt-6">
+                    <h3 className="text-sm font-bold text-gray-900 mb-3">Campaign Links</h3>
+                    <p className="text-xs text-gray-500 mb-4">Click to copy tracking links for specific platforms:</p>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${generatedLink}?s=tiktok`)
+                          alert('TikTok link copied!')
+                        }}
+                        className="flex items-center justify-center gap-2 px-3 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-sm"
+                      >
+                        <Smartphone className="w-4 h-4" /> TikTok
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${generatedLink}?s=facebook`)
+                          alert('Facebook link copied!')
+                        }}
+                        className="flex items-center justify-center gap-2 px-3 py-2 bg-[#1877F2] text-white rounded-lg hover:bg-[#166fe5] transition-colors text-sm"
+                      >
+                        <Globe className="w-4 h-4" /> Facebook
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${generatedLink}?s=instagram`)
+                          alert('Instagram link copied!')
+                        }}
+                        className="flex items-center justify-center gap-2 px-3 py-2 bg-[#E4405F] text-white rounded-lg hover:bg-[#d63c59] transition-colors text-sm"
+                      >
+                        <Smartphone className="w-4 h-4" /> Instagram
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${generatedLink}?s=youtube`)
+                          alert('YouTube link copied!')
+                        }}
+                        className="flex items-center justify-center gap-2 px-3 py-2 bg-[#FF0000] text-white rounded-lg hover:bg-[#e60000] transition-colors text-sm"
+                      >
+                        <Globe className="w-4 h-4" /> YouTube
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${generatedLink}?s=whatsapp`)
+                          alert('WhatsApp link copied!')
+                        }}
+                        className="flex items-center justify-center gap-2 px-3 py-2 bg-[#25D366] text-white rounded-lg hover:bg-[#22bf5b] transition-colors text-sm"
+                      >
+                        <Smartphone className="w-4 h-4" /> WhatsApp
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${generatedLink}?s=telegram`)
+                          alert('Telegram link copied!')
+                        }}
+                        className="flex items-center justify-center gap-2 px-3 py-2 bg-[#0088cc] text-white rounded-lg hover:bg-[#007ebd] transition-colors text-sm"
+                      >
+                        <Smartphone className="w-4 h-4" /> Telegram
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 mt-6">
+                  <a
+                    href={generatedLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-[#ff6602] hover:text-[#e65a02] font-medium"
                   >
-                <LinkIcon className="w-4 h-4" />
-                Test Link
-              </a>
-              <a
-                href="/dashboard"
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-700 font-medium"
-              >
-                View Dashboard
-              </a>
-            </div>
+                    <LinkIcon className="w-4 h-4" />
+                    Test Link
+                  </a>
+                  <a
+                    href="/dashboard"
+                    className="flex items-center gap-2 text-gray-600 hover:text-gray-700 font-medium"
+                  >
+                    View Dashboard
+                  </a>
+                </div>
               </div>
-      </div>
+            </div>
           )}
-    </div>
+        </div>
       </div >
     </main >
   )
