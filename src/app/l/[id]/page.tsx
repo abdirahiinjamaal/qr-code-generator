@@ -145,7 +145,7 @@ export default function RedirectPage() {
                 </div>
 
                 <div className="text-center text-sm text-gray-400 mt-8">
-                    Powered by Universal QR
+                    Powered by Caawiye.com
                 </div>
             </div>
         </main>
