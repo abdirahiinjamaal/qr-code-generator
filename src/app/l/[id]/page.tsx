@@ -11,6 +11,7 @@ interface LinkData {
     ios_url: string
     android_url: string
     web_url: string
+    logo_url: string
 }
 
 export default function RedirectPage() {
@@ -101,6 +102,18 @@ export default function RedirectPage() {
             {/* Content */}
             <div className="w-full max-w-md space-y-8 relative z-10">
                 <div className="text-center">
+                    {linkData.logo_url && (
+                        <div className="mb-6 flex justify-center">
+                            <img
+                                src={linkData.logo_url}
+                                alt={linkData.title}
+                                className="w-24 h-24 rounded-2xl shadow-2xl border-4 border-white/20 object-cover"
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none'
+                                }}
+                            />
+                        </div>
+                    )}
                     <h1 className="text-3xl font-bold text-white mb-2 drop-shadow-lg">{linkData.title}</h1>
                     <p className="text-white/90 drop-shadow">Kala soo Deg Appka Caawiye Playstoreka ama App Storeka</p>
                 </div>

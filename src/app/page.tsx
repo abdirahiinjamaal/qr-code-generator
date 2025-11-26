@@ -11,6 +11,7 @@ export default function Home() {
   const [androidUrl, setAndroidUrl] = useState('')
   const [webUrl, setWebUrl] = useState('')
   const [title, setTitle] = useState('')
+  const [logoUrl, setLogoUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [generatedLink, setGeneratedLink] = useState<string | null>(null)
   const [user, setUser] = useState<any>(null)
@@ -83,6 +84,7 @@ export default function Home() {
           ios_url: iosUrl,
           android_url: androidUrl,
           web_url: webUrl,
+          logo_url: logoUrl,
         })
         .select()
         .single()
@@ -161,6 +163,20 @@ export default function Home() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#007fff] focus:border-[#007fff] transition-colors text-gray-900"
                   placeholder="My Awesome App"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  App Logo URL (Optional)
+                </label>
+                <input
+                  type="url"
+                  value={logoUrl}
+                  onChange={(e) => setLogoUrl(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#007fff] focus:border-[#007fff] transition-colors text-gray-900"
+                  placeholder="https://example.com/logo.png"
+                />
+                <p className="text-xs text-gray-500 mt-1">Add your app logo to show on the scanner page</p>
               </div>
 
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
