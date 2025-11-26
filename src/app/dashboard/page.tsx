@@ -39,6 +39,8 @@ import {
 interface ClickData {
     platform: string
     source: string
+    country?: string
+    city?: string
     created_at: string
 }
 
@@ -89,6 +91,8 @@ export default function Dashboard() {
                         clicks (
                             platform,
                             source,
+                            country,
+                            city,
                             created_at
                         )
                     `)
@@ -245,6 +249,24 @@ export default function Dashboard() {
         return { date: new Date(date).toLocaleDateString('en-US', { weekday: 'short' }), count }
     })
 
+    // Calculate location stats
+    const locationStats = links.reduce((acc, link) => {
+        link.clicks.forEach(click => {
+            const country = click.country || 'Unknown'
+            acc[country] = (acc[country] || 0) + 1
+        })
+        return acc
+    }, {} as Record<string, number>)
+
+    const locationData = Object.entries(locationStats)
+        .map(([name, value]) => ({
+            name,
+            value,
+            color: '#8884d8' // Default color
+        }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 5) // Top 5 countries
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -318,13 +340,13 @@ export default function Dashboard() {
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                         <div className="flex items-center justify-between mb-4">
                             <div className="p-2 bg-purple-50 rounded-lg">
-                                <BarChart3 className="w-6 h-6 text-purple-600" />
+                                <Globe className="w-6 h-6 text-purple-600" />
                             </div>
                         </div>
                         <div className="text-3xl font-bold text-gray-900">
-                            {barData.length > 0 ? barData[0].name : 'N/A'}
+                            {locationData.length > 0 ? locationData[0].name : 'N/A'}
                         </div>
-                        <div className="text-sm text-gray-500">Top Traffic Source</div>
+                        <div className="text-sm text-gray-500">Top Country</div>
                     </div>
                 </div>
 
@@ -384,7 +406,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Platform Pie Chart */}
-                    <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                         <h3 className="text-lg font-bold text-gray-900 mb-6">Platform Distribution</h3>
                         <div className="h-[300px] w-full relative">
                             {pieData.length > 0 ? (
@@ -410,6 +432,31 @@ export default function Dashboard() {
                             ) : (
                                 <div className="absolute inset-0 flex items-center justify-center text-gray-400">
                                     No data available
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Location Bar Chart */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 className="text-lg font-bold text-gray-900 mb-6">Top Countries</h3>
+                        <div className="h-[300px] w-full">
+                            {locationData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={locationData} layout="vertical" margin={{ left: 20 }}>
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
+                                        <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
+                                        <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} width={80} />
+                                        <Tooltip
+                                            cursor={{ fill: '#f9fafb' }}
+                                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px -2px rgb(0 0 0 / 0.1)' }}
+                                        />
+                                        <Bar dataKey="value" fill="#8884d8" radius={[0, 4, 4, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="h-full flex items-center justify-center text-gray-400">
+                                    No location data available
                                 </div>
                             )}
                         </div>
