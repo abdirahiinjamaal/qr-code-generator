@@ -11,7 +11,8 @@ export default function Home() {
   const [androidUrl, setAndroidUrl] = useState('')
   const [webUrl, setWebUrl] = useState('')
   const [title, setTitle] = useState('')
-  const [logoUrl, setLogoUrl] = useState('')
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [generatedLink, setGeneratedLink] = useState<string | null>(null)
   const [user, setUser] = useState<any>(null)
@@ -54,6 +55,29 @@ export default function Home() {
     }
   }
 
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please upload an image file')
+        return
+      }
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Logo must be less than 2MB')
+        return
+      }
+      setLogoFile(file)
+      // Create preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -76,6 +100,33 @@ export default function Home() {
     setLoading(true)
 
     try {
+      let logoUrl = ''
+
+      // Upload logo if provided
+      if (logoFile) {
+        const fileExt = logoFile.name.split('.').pop()
+        const fileName = `${user.id}-${Date.now()}.${fileExt}`
+        const filePath = `${fileName}`
+
+        const { error: uploadError } = await supabase.storage
+          .from('logos')
+          .upload(filePath, logoFile, {
+            cacheControl: '3600',
+            upsert: false
+          })
+
+        if (uploadError) {
+          throw new Error('Failed to upload logo: ' + uploadError.message)
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('logos')
+          .getPublicUrl(filePath)
+
+        logoUrl = urlData.publicUrl
+      }
+
       const { data, error } = await supabase
         .from('links')
         .insert({
@@ -167,16 +218,28 @@ export default function Home() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  App Logo URL (Optional)
+                  App Logo (Optional)
                 </label>
-                <input
-                  type="url"
-                  value={logoUrl}
-                  onChange={(e) => setLogoUrl(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#007fff] focus:border-[#007fff] transition-colors text-gray-900"
-                  placeholder="https://example.com/logo.png"
-                />
-                <p className="text-xs text-gray-500 mt-1">Add your app logo to show on the scanner page</p>
+                <div className="flex items-start gap-4">
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#007fff] focus:border-[#007fff] transition-colors text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#ff6602] file:text-white hover:file:bg-[#e65a02]"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Upload your app logo (PNG, JPG, max 2MB)</p>
+                  </div>
+                  {logoPreview && (
+                    <div className="flex-shrink-0">
+                      <img
+                        src={logoPreview}
+                        alt="Logo preview"
+                        className="w-16 h-16 rounded-lg object-cover border-2 border-gray-300"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
