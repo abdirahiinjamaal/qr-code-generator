@@ -104,11 +104,12 @@ export default function Home() {
 
       // Upload logo if provided
       if (logoFile) {
+        console.log('Uploading logo...', logoFile.name)
         const fileExt = logoFile.name.split('.').pop()
         const fileName = `${user.id}-${Date.now()}.${fileExt}`
         const filePath = `${fileName}`
 
-        const { error: uploadError } = await supabase.storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
           .from('logos')
           .upload(filePath, logoFile, {
             cacheControl: '3600',
@@ -116,8 +117,13 @@ export default function Home() {
           })
 
         if (uploadError) {
-          throw new Error('Failed to upload logo: ' + uploadError.message)
+          console.error('Upload error:', uploadError)
+          alert('Failed to upload logo: ' + uploadError.message + '\n\nPlease make sure the "logos" bucket exists in Supabase Storage.')
+          setLoading(false)
+          return
         }
+
+        console.log('Upload successful:', uploadData)
 
         // Get public URL
         const { data: urlData } = supabase.storage
@@ -125,6 +131,7 @@ export default function Home() {
           .getPublicUrl(filePath)
 
         logoUrl = urlData.publicUrl
+        console.log('Public URL:', logoUrl)
       }
 
       const { data, error } = await supabase
