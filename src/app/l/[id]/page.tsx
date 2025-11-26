@@ -8,6 +8,7 @@ import { Loader2, Smartphone, Globe, AlertCircle, Apple } from 'lucide-react'
 interface LinkData {
     id: string
     title: string
+    description: string
     ios_url: string
     android_url: string
     web_url: string
@@ -100,7 +101,7 @@ export default function RedirectPage() {
                         </div>
                     )}
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">{linkData.title}</h1>
-                    <p className="text-gray-600">Kala soo Deg Appka Caawiye Playstoreka ama App Storeka</p>
+                    <p className="text-gray-600">{linkData.description || 'Kala soo Deg Appka Caawiye Playstoreka ama App Storeka'}</p>
                 </div>
 
                 <div className="space-y-4">

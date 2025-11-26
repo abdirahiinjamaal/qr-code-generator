@@ -11,6 +11,7 @@ export default function Home() {
   const [androidUrl, setAndroidUrl] = useState('')
   const [webUrl, setWebUrl] = useState('')
   const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('Kala soo Deg Appka Caawiye Playstoreka ama App Storeka')
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -139,6 +140,7 @@ export default function Home() {
         .insert({
           user_id: user.id,
           title,
+          description,
           ios_url: iosUrl,
           android_url: androidUrl,
           web_url: webUrl,
@@ -221,6 +223,20 @@ export default function Home() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#007fff] focus:border-[#007fff] transition-colors text-gray-900"
                   placeholder="My Awesome App"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description / Subtitle
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#007fff] focus:border-[#007fff] transition-colors text-gray-900"
+                  placeholder="Kala soo Deg Appka Caawiye Playstoreka ama App Storeka"
+                  rows={2}
+                />
+                <p className="text-xs text-gray-500 mt-1">Text shown below the app name on scanner page</p>
               </div>
 
               <div>
