@@ -43,6 +43,16 @@ export default function Home() {
     return () => subscription.unsubscribe()
   }, [])
 
+  const isSafeUrl = (url: string): boolean => {
+    if (!url) return true // Allow empty URLs
+    try {
+      const parsed = new URL(url)
+      return ['http:', 'https:'].includes(parsed.protocol)
+    } catch {
+      return false
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -53,6 +63,12 @@ export default function Home() {
 
     if (!isAdmin) {
       alert('⛔ Access Denied: Only administrators can create QR codes.')
+      return
+    }
+
+    // Validate URLs
+    if (!isSafeUrl(iosUrl) || !isSafeUrl(androidUrl) || !isSafeUrl(webUrl)) {
+      alert('⚠️ Invalid URL: Only HTTP and HTTPS URLs are allowed.')
       return
     }
 
