@@ -13,6 +13,9 @@ interface LinkData {
     android_url: string
     web_url: string
     logo_url: string
+    show_ios: boolean
+    show_android: boolean
+    show_web: boolean
 }
 
 export default function RedirectPage() {
@@ -105,7 +108,7 @@ export default function RedirectPage() {
                 </div>
 
                 <div className="space-y-4">
-                    {linkData.ios_url && (
+                    {linkData.show_ios && linkData.ios_url && (
                         <button
                             onClick={() => handleClick('ios', linkData.ios_url)}
                             className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-black text-white rounded-xl hover:bg-gray-900 transition-all active:scale-95 shadow-lg"
@@ -118,7 +121,7 @@ export default function RedirectPage() {
                         </button>
                     )}
 
-                    {linkData.android_url && (
+                    {linkData.show_android && linkData.android_url && (
                         <button
                             onClick={() => handleClick('android', linkData.android_url)}
                             className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-[#3DDC84] text-white rounded-xl hover:bg-[#32b36b] transition-all active:scale-95 shadow-lg"
@@ -133,7 +136,7 @@ export default function RedirectPage() {
                         </button>
                     )}
 
-                    {linkData.web_url && (
+                    {linkData.show_web && linkData.web_url && (
                         <button
                             onClick={() => handleClick('web', linkData.web_url)}
                             className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-[#007fff] text-white rounded-xl hover:bg-[#006ee6] transition-all active:scale-95 shadow-lg"
