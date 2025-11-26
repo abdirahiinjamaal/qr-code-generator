@@ -148,34 +148,27 @@ export default function Dashboard() {
         link.click()
     }
 
-    // Calculate aggregate stats
-    const totalClicks = links.reduce((sum, link) => sum + link.clicks.length, 0)
-    const totalLinks = links.length
-
-    const platformStats = links.reduce((acc, link) => {
+    // Calculate source stats
+    const sourceStats = links.reduce((acc, link) => {
         link.clicks.forEach(click => {
-            acc[click.platform] = (acc[click.platform] || 0) + 1
+            const source = click.source || 'direct'
+            acc[source] = (acc[source] || 0) + 1
         })
         return acc
     }, {} as Record<string, number>)
 
-    const pieData = [
-        { name: 'iOS', value: platformStats['ios'] || 0, color: '#000000' },
-        { name: 'Android', value: platformStats['android'] || 0, color: '#3DDC84' },
-        { name: 'Web', value: platformStats['web'] || 0, color: '#007fff' },
-    ].filter(d => d.value > 0)
-
-    // Calculate clicks over time (last 7 days)
-    const clicksOverTime = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date()
-        d.setDate(d.getDate() - i)
-        return d.toISOString().split('T')[0]
-    }).reverse().map(date => {
-        const count = links.reduce((sum, link) => {
-            return sum + link.clicks.filter(c => c.created_at.startsWith(date)).length
-        }, 0)
-        return { date: new Date(date).toLocaleDateString('en-US', { weekday: 'short' }), count }
-    })
+    const barData = Object.entries(sourceStats)
+        .map(([name, value]) => ({
+            name: name.charAt(0).toUpperCase() + name.slice(1), // Capitalize
+            value,
+            color: name === 'tiktok' ? '#000000' :
+                name === 'facebook' ? '#1877F2' :
+                    name === 'instagram' ? '#E4405F' :
+                        name === 'youtube' ? '#FF0000' :
+                            name === 'whatsapp' ? '#25D366' :
+                                name === 'telegram' ? '#0088cc' : '#888888'
+        }))
+        .sort((a, b) => b.value - a.value)
 
     if (loading) {
         return (
@@ -250,20 +243,20 @@ export default function Dashboard() {
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                         <div className="flex items-center justify-between mb-4">
                             <div className="p-2 bg-purple-50 rounded-lg">
-                                <Calendar className="w-6 h-6 text-purple-600" />
+                                <BarChart3 className="w-6 h-6 text-purple-600" />
                             </div>
                         </div>
                         <div className="text-3xl font-bold text-gray-900">
-                            {links.length > 0 ? new Date(links[0].created_at).toLocaleDateString() : 'N/A'}
+                            {barData.length > 0 ? barData[0].name : 'N/A'}
                         </div>
-                        <div className="text-sm text-gray-500">Last Created</div>
+                        <div className="text-sm text-gray-500">Top Traffic Source</div>
                     </div>
-                </div >
+                </div>
 
                 {/* Charts Section */}
-                < div className="grid grid-cols-1 lg:grid-cols-3 gap-8" >
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Area Chart */}
-                    < div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100" >
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                         <h3 className="text-lg font-bold text-gray-900 mb-6">Clicks Overview (Last 7 Days)</h3>
                         <div className="h-[300px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
@@ -284,10 +277,39 @@ export default function Dashboard() {
                                 </AreaChart>
                             </ResponsiveContainer>
                         </div>
-                    </div >
+                    </div>
 
-                    {/* Pie Chart */}
-                    < div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100" >
+                    {/* Source Bar Chart */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 className="text-lg font-bold text-gray-900 mb-6">Traffic Sources</h3>
+                        <div className="h-[300px] w-full">
+                            {barData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={barData} layout="vertical" margin={{ left: 20 }}>
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
+                                        <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
+                                        <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} width={80} />
+                                        <Tooltip
+                                            cursor={{ fill: '#f9fafb' }}
+                                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px -2px rgb(0 0 0 / 0.1)' }}
+                                        />
+                                        <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                                            {barData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="h-full flex items-center justify-center text-gray-400">
+                                    No traffic data available
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Platform Pie Chart */}
+                    <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                         <h3 className="text-lg font-bold text-gray-900 mb-6">Platform Distribution</h3>
                         <div className="h-[300px] w-full relative">
                             {pieData.length > 0 ? (
@@ -295,8 +317,8 @@ export default function Dashboard() {
                                     <PieChart>
                                         <Pie
                                             data={pieData}
-                                            innerRadius={60}
-                                            outerRadius={80}
+                                            innerRadius={80}
+                                            outerRadius={100}
                                             paddingAngle={5}
                                             dataKey="value"
                                         >
@@ -316,11 +338,11 @@ export default function Dashboard() {
                                 </div>
                             )}
                         </div>
-                    </div >
-                </div >
+                    </div>
+                </div>
 
                 {/* Links Table */}
-                < div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" >
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div className="p-6 border-b border-gray-100">
                         <h3 className="text-lg font-bold text-gray-900">Your Links</h3>
                     </div>
@@ -330,7 +352,7 @@ export default function Dashboard() {
                                 <tr>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">App Name</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Active Platforms</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Top Source</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Clicks</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Platform Split</th>
                                     <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
@@ -342,6 +364,16 @@ export default function Dashboard() {
                                     const android = link.clicks.filter(c => c.platform === 'android').length
                                     const web = link.clicks.filter(c => c.platform === 'web').length
                                     const total = link.clicks.length
+
+                                    // Calculate top source for this link
+                                    const linkSourceStats = link.clicks.reduce((acc, click) => {
+                                        const s = click.source || 'direct'
+                                        acc[s] = (acc[s] || 0) + 1
+                                        return acc
+                                    }, {} as Record<string, number>)
+
+                                    const topSource = Object.entries(linkSourceStats)
+                                        .sort((a, b) => b.value - a.value)[0]
 
                                     return (
                                         <tr key={link.id} className="hover:bg-gray-50 transition-colors">
@@ -355,17 +387,17 @@ export default function Dashboard() {
                                                 {new Date(link.created_at).toLocaleDateString()}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex gap-2">
-                                                    <div className={`p-1.5 rounded-md ${link.show_ios ? 'bg-black text-white' : 'bg-gray-100 text-gray-300'}`} title="iOS">
-                                                        <Smartphone className="w-4 h-4" />
-                                                    </div>
-                                                    <div className={`p-1.5 rounded-md ${link.show_android ? 'bg-[#3DDC84] text-white' : 'bg-gray-100 text-gray-300'}`} title="Android">
-                                                        <Smartphone className="w-4 h-4" />
-                                                    </div>
-                                                    <div className={`p-1.5 rounded-md ${link.show_web ? 'bg-[#007fff] text-white' : 'bg-gray-100 text-gray-300'}`} title="Web">
-                                                        <Globe className="w-4 h-4" />
-                                                    </div>
-                                                </div>
+                                                {topSource ? (
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
+                                                        ${topSource[0] === 'tiktok' ? 'bg-black text-white' :
+                                                            topSource[0] === 'facebook' ? 'bg-blue-100 text-blue-800' :
+                                                                topSource[0] === 'instagram' ? 'bg-pink-100 text-pink-800' :
+                                                                    'bg-gray-100 text-gray-800'}`}>
+                                                        {topSource[0]} ({topSource[1]})
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400">-</span>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="text-sm font-bold text-gray-900">{total}</div>
@@ -419,8 +451,8 @@ export default function Dashboard() {
                             </tbody>
                         </table>
                     </div>
-                </div >
-            </div >
-        </main >
+                </div>
+            </div>
+        </main>
     )
 }
