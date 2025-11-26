@@ -37,12 +37,54 @@ interface ClickData {
     platform: string
     source: string
     created_at: string
+    'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+import {
+    Loader2,
+    BarChart3,
+    ExternalLink,
+    Trash2,
+    Download,
+    Smartphone,
+    Globe,
+    Copy,
+    Check,
+    TrendingUp,
+    Link as LinkIcon,
+    Calendar
+} from 'lucide-react'
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    Tooltip,
+    ResponsiveContainer,
+    Cell,
+    AreaChart,
+    Area,
+    CartesianGrid,
+    PieChart,
+    Pie,
+    Legend
+} from 'recharts'
+
+interface ClickData {
+    platform: string
+    source: string
+    created_at: string
 }
 
 interface LinkStats {
     id: string
     title: string
     created_at: string
+    show_ios: boolean
+    show_android: boolean
+    show_web: boolean
     clicks: ClickData[]
 }
 
@@ -67,6 +109,9 @@ export default function Dashboard() {
                         id,
                         title,
                         created_at,
+                        show_ios,
+                        show_android,
+                        show_web,
                         clicks (
                             platform,
                             source,
@@ -235,6 +280,7 @@ export default function Dashboard() {
                                 <tr>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">App Name</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Active Platforms</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Clicks</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Platform Split</th>
                                     <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
@@ -257,6 +303,19 @@ export default function Dashboard() {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 {new Date(link.created_at).toLocaleDateString()}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex gap-2">
+                                                    <div className={`p-1.5 rounded-md ${link.show_ios ? 'bg-black text-white' : 'bg-gray-100 text-gray-300'}`} title="iOS">
+                                                        <Smartphone className="w-4 h-4" />
+                                                    </div>
+                                                    <div className={`p-1.5 rounded-md ${link.show_android ? 'bg-[#3DDC84] text-white' : 'bg-gray-100 text-gray-300'}`} title="Android">
+                                                        <Smartphone className="w-4 h-4" />
+                                                    </div>
+                                                    <div className={`p-1.5 rounded-md ${link.show_web ? 'bg-[#007fff] text-white' : 'bg-gray-100 text-gray-300'}`} title="Web">
+                                                        <Globe className="w-4 h-4" />
+                                                    </div>
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="text-sm font-bold text-gray-900">{total}</div>
