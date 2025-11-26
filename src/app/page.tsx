@@ -6,6 +6,8 @@ import { QRCodeSVG } from 'qrcode.react'
 import { supabase, isUserAdmin } from '@/lib/supabase'
 import { Loader2, Smartphone, Globe, Link as LinkIcon, LogOut, ShieldAlert } from 'lucide-react'
 
+import { User } from '@supabase/supabase-js'
+
 export default function Home() {
   const [iosUrl, setIosUrl] = useState('')
   const [androidUrl, setAndroidUrl] = useState('')
@@ -18,7 +20,7 @@ export default function Home() {
   const [generatedLink, setGeneratedLink] = useState<string | null>(null)
   const [qrValue, setQrValue] = useState<string | null>(null)
   const [activeSource, setActiveSource] = useState<string | null>(null)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [showIos, setShowIos] = useState(true)
   const [showAndroid, setShowAndroid] = useState(true)
@@ -170,9 +172,9 @@ export default function Home() {
 
       const link = `${window.location.origin}/l/${data.id}`
       setGeneratedLink(link)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating link:', error)
-      alert('Error creating link: ' + (error.message || 'Unknown error'))
+      alert('Error creating link: ' + ((error as Error).message || 'Unknown error'))
     } finally {
       setLoading(false)
     }
@@ -288,6 +290,7 @@ export default function Home() {
                   </div>
                   {logoPreview && (
                     <div className="flex-shrink-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={logoPreview}
                         alt="Logo preview"
