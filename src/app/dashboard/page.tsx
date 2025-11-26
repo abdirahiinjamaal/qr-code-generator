@@ -1,43 +1,5 @@
+
 'use client'
-
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
-import {
-    Loader2,
-    BarChart3,
-    ExternalLink,
-    Trash2,
-    Download,
-    Smartphone,
-    Globe,
-    Copy,
-    Check,
-    TrendingUp,
-    Link as LinkIcon,
-    Calendar
-} from 'lucide-react'
-import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    Tooltip,
-    ResponsiveContainer,
-    Cell,
-    AreaChart,
-    Area,
-    CartesianGrid,
-    PieChart,
-    Pie,
-    Legend
-} from 'recharts'
-
-interface ClickData {
-    platform: string
-    source: string
-    created_at: string
-    'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -179,11 +141,98 @@ export default function Dashboard() {
             })
         ].map(e => e.join(',')).join('\n')
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-                        </div >
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(blob)
+        link.download = `qr_stats_${new Date().toISOString().split('T')[0]}.csv`
+        link.click()
+    }
+
+    // Calculate aggregate stats
+    const totalClicks = links.reduce((sum, link) => sum + link.clicks.length, 0)
+    const totalLinks = links.length
+
+    const platformStats = links.reduce((acc, link) => {
+        link.clicks.forEach(click => {
+            acc[click.platform] = (acc[click.platform] || 0) + 1
+        })
+        return acc
+    }, {} as Record<string, number>)
+
+    const pieData = [
+        { name: 'iOS', value: platformStats['ios'] || 0, color: '#000000' },
+        { name: 'Android', value: platformStats['android'] || 0, color: '#3DDC84' },
+        { name: 'Web', value: platformStats['web'] || 0, color: '#007fff' },
+    ].filter(d => d.value > 0)
+
+    // Calculate clicks over time (last 7 days)
+    const clicksOverTime = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date()
+        d.setDate(d.getDate() - i)
+        return d.toISOString().split('T')[0]
+    }).reverse().map(date => {
+        const count = links.reduce((sum, link) => {
+            return sum + link.clicks.filter(c => c.created_at.startsWith(date)).length
+        }, 0)
+        return { date: new Date(date).toLocaleDateString('en-US', { weekday: 'short' }), count }
+    })
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <Loader2 className="w-8 h-8 animate-spin text-[#ff6602]" />
+            </div>
+        )
+    }
+
+    return (
+        <main className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto space-y-8">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
+                        <p className="text-gray-500 mt-1">Overview of your QR code performance</p>
+                    </div>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={handleExport}
+                            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
+                        >
+                            <Download className="w-4 h-4" />
+                            Export CSV
+                        </button>
+                        <a
+                            href="/"
+                            className="flex items-center gap-2 px-4 py-2 bg-[#ff6602] text-white rounded-xl hover:bg-[#e65a02] transition-colors shadow-sm shadow-orange-200"
+                        >
+                            <LinkIcon className="w-4 h-4" />
+                            Create New Link
+                        </a>
+                    </div>
+                </div>
+
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="p-2 bg-orange-50 rounded-lg">
+                                <TrendingUp className="w-6 h-6 text-[#ff6602]" />
+                            </div>
+                            <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">+12%</span>
+                        </div>
+                        <div className="text-3xl font-bold text-gray-900">{totalClicks}</div>
+                        <div className="text-sm text-gray-500">Total Clicks</div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="p-2 bg-blue-50 rounded-lg">
+                                <LinkIcon className="w-6 h-6 text-blue-600" />
+                            </div>
+                        </div>
                         <div className="text-3xl font-bold text-gray-900">{totalLinks}</div>
                         <div className="text-sm text-gray-500">Active Links</div>
-                    </div >
+                    </div>
 
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                         <div className="flex items-center justify-between mb-4">
@@ -210,10 +259,10 @@ export default function Dashboard() {
                     </div>
                 </div >
 
-        {/* Charts Section */ }
-        < div className = "grid grid-cols-1 lg:grid-cols-3 gap-8" >
-            {/* Area Chart */ }
-            < div className = "lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100" >
+                {/* Charts Section */}
+                < div className="grid grid-cols-1 lg:grid-cols-3 gap-8" >
+                    {/* Area Chart */}
+                    < div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100" >
                         <h3 className="text-lg font-bold text-gray-900 mb-6">Clicks Overview (Last 7 Days)</h3>
                         <div className="h-[300px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
@@ -236,8 +285,8 @@ export default function Dashboard() {
                         </div>
                     </div >
 
-        {/* Pie Chart */ }
-        < div className = "bg-white p-6 rounded-2xl shadow-sm border border-gray-100" >
+                    {/* Pie Chart */}
+                    < div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100" >
                         <h3 className="text-lg font-bold text-gray-900 mb-6">Platform Distribution</h3>
                         <div className="h-[300px] w-full relative">
                             {pieData.length > 0 ? (
@@ -269,8 +318,8 @@ export default function Dashboard() {
                     </div >
                 </div >
 
-        {/* Links Table */ }
-        < div className = "bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" >
+                {/* Links Table */}
+                < div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" >
                     <div className="p-6 border-b border-gray-100">
                         <h3 className="text-lg font-bold text-gray-900">Your Links</h3>
                     </div>
