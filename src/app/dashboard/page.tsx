@@ -148,6 +148,23 @@ export default function Dashboard() {
         link.click()
     }
 
+    // Calculate aggregate stats
+    const totalClicks = links.reduce((sum, link) => sum + link.clicks.length, 0)
+    const totalLinks = links.length
+
+    const platformStats = links.reduce((acc, link) => {
+        link.clicks.forEach(click => {
+            acc[click.platform] = (acc[click.platform] || 0) + 1
+        })
+        return acc
+    }, {} as Record<string, number>)
+
+    const pieData = [
+        { name: 'iOS', value: platformStats['ios'] || 0, color: '#000000' },
+        { name: 'Android', value: platformStats['android'] || 0, color: '#3DDC84' },
+        { name: 'Web', value: platformStats['web'] || 0, color: '#007fff' },
+    ].filter(d => d.value > 0)
+
     // Calculate source stats
     const sourceStats = links.reduce((acc, link) => {
         link.clicks.forEach(click => {
@@ -169,6 +186,18 @@ export default function Dashboard() {
                                 name === 'telegram' ? '#0088cc' : '#888888'
         }))
         .sort((a, b) => b.value - a.value)
+
+    // Calculate clicks over time (last 7 days)
+    const clicksOverTime = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date()
+        d.setDate(d.getDate() - i)
+        return d.toISOString().split('T')[0]
+    }).reverse().map(date => {
+        const count = links.reduce((sum, link) => {
+            return sum + link.clicks.filter(c => c.created_at.startsWith(date)).length
+        }, 0)
+        return { date: new Date(date).toLocaleDateString('en-US', { weekday: 'short' }), count }
+    })
 
     if (loading) {
         return (
@@ -373,7 +402,7 @@ export default function Dashboard() {
                                     }, {} as Record<string, number>)
 
                                     const topSource = Object.entries(linkSourceStats)
-                                        .sort((a, b) => b.value - a.value)[0]
+                                        .sort((a, b) => b[1] - a[1])[0]
 
                                     return (
                                         <tr key={link.id} className="hover:bg-gray-50 transition-colors">
