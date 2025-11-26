@@ -16,7 +16,9 @@ import {
     Check,
     TrendingUp,
     Link as LinkIcon,
-    Calendar
+    Calendar,
+    Pencil,
+    X
 } from 'lucide-react'
 import {
     BarChart,
@@ -43,6 +45,10 @@ interface ClickData {
 interface LinkStats {
     id: string
     title: string
+    description: string
+    ios_url: string
+    android_url: string
+    web_url: string
     created_at: string
     show_ios: boolean
     show_android: boolean
@@ -54,6 +60,8 @@ export default function Dashboard() {
     const [links, setLinks] = useState<LinkStats[]>([])
     const [loading, setLoading] = useState(true)
     const [copiedId, setCopiedId] = useState<string | null>(null)
+    const [editingLink, setEditingLink] = useState<LinkStats | null>(null)
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const router = useRouter()
 
     useEffect(() => {
@@ -70,6 +78,10 @@ export default function Dashboard() {
                     .select(`
                         id,
                         title,
+                        description,
+                        ios_url,
+                        android_url,
+                        web_url,
                         created_at,
                         show_ios,
                         show_android,
@@ -120,6 +132,40 @@ export default function Dashboard() {
         navigator.clipboard.writeText(url)
         setCopiedId(id)
         setTimeout(() => setCopiedId(null), 2000)
+    }
+
+    const handleUpdateLink = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!editingLink) return
+
+        setIsSubmitting(true)
+        try {
+            const { error } = await supabase
+                .from('links')
+                .update({
+                    title: editingLink.title,
+                    description: editingLink.description,
+                    ios_url: editingLink.ios_url,
+                    android_url: editingLink.android_url,
+                    web_url: editingLink.web_url,
+                    show_ios: editingLink.show_ios,
+                    show_android: editingLink.show_android,
+                    show_web: editingLink.show_web,
+                })
+                .eq('id', editingLink.id)
+
+            if (error) throw error
+
+            // Update local state
+            setLinks(links.map(l => l.id === editingLink.id ? editingLink : l))
+            setEditingLink(null)
+            alert('✅ Link updated successfully!')
+        } catch (error) {
+            console.error('Error updating link:', error)
+            alert('❌ Failed to update link')
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
     const handleExport = () => {
@@ -466,6 +512,13 @@ export default function Dashboard() {
                                                         <ExternalLink className="w-4 h-4" />
                                                     </a>
                                                     <button
+                                                        onClick={() => setEditingLink(link)}
+                                                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                        title="Edit Link"
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                    <button
                                                         onClick={() => handleDelete(link.id, link.title)}
                                                         className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                         title="Delete Link"
@@ -482,6 +535,129 @@ export default function Dashboard() {
                     </div>
                 </div>
             </div>
+
+            {/* Edit Modal */}
+            {editingLink && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
+                            <h2 className="text-xl font-bold text-gray-900">Edit Link</h2>
+                            <button
+                                onClick={() => setEditingLink(null)}
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <X className="w-5 h-5 text-gray-500" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleUpdateLink} className="p-6 space-y-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">App Name</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={editingLink.title}
+                                    onChange={e => setEditingLink({ ...editingLink, title: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] focus:border-[#ff6602] text-gray-900"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                                <textarea
+                                    value={editingLink.description || ''}
+                                    onChange={e => setEditingLink({ ...editingLink, description: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] focus:border-[#ff6602] text-gray-900"
+                                    rows={2}
+                                />
+                            </div>
+
+                            <div className="space-y-4">
+                                <h3 className="font-medium text-gray-900">Platform URLs</h3>
+
+                                <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
+                                    <div className="pt-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={editingLink.show_ios}
+                                            onChange={e => setEditingLink({ ...editingLink, show_ios: e.target.checked })}
+                                            className="w-4 h-4 text-[#ff6602] rounded focus:ring-[#ff6602]"
+                                        />
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">iOS App Store URL</label>
+                                        <input
+                                            type="url"
+                                            value={editingLink.ios_url || ''}
+                                            onChange={e => setEditingLink({ ...editingLink, ios_url: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] text-gray-900"
+                                            placeholder="https://apps.apple.com/..."
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
+                                    <div className="pt-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={editingLink.show_android}
+                                            onChange={e => setEditingLink({ ...editingLink, show_android: e.target.checked })}
+                                            className="w-4 h-4 text-[#ff6602] rounded focus:ring-[#ff6602]"
+                                        />
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Android Play Store URL</label>
+                                        <input
+                                            type="url"
+                                            value={editingLink.android_url || ''}
+                                            onChange={e => setEditingLink({ ...editingLink, android_url: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] text-gray-900"
+                                            placeholder="https://play.google.com/..."
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
+                                    <div className="pt-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={editingLink.show_web}
+                                            onChange={e => setEditingLink({ ...editingLink, show_web: e.target.checked })}
+                                            className="w-4 h-4 text-[#ff6602] rounded focus:ring-[#ff6602]"
+                                        />
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Website URL</label>
+                                        <input
+                                            type="url"
+                                            value={editingLink.web_url || ''}
+                                            onChange={e => setEditingLink({ ...editingLink, web_url: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] text-gray-900"
+                                            placeholder="https://..."
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingLink(null)}
+                                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="px-4 py-2 bg-[#ff6602] text-white rounded-lg hover:bg-[#e65a02] transition-colors disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </main>
     )
 }
