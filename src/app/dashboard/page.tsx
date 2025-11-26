@@ -15,6 +15,9 @@ import {
     Copy,
     Check,
     TrendingUp,
+    LayoutDashboard,
+    Users,
+    Share2,
     Link as LinkIcon,
     Calendar,
     Pencil,
@@ -64,6 +67,7 @@ export default function Dashboard() {
     const [copiedId, setCopiedId] = useState<string | null>(null)
     const [editingLink, setEditingLink] = useState<LinkStats | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [activeTab, setActiveTab] = useState<'overview' | 'audience' | 'sources' | 'links'>('overview')
     const router = useRouter()
 
     useEffect(() => {
@@ -297,414 +301,125 @@ export default function Dashboard() {
                             className="flex items-center gap-2 px-4 py-2 bg-[#ff6602] text-white rounded-xl hover:bg-[#e65a02] transition-colors shadow-sm shadow-orange-200"
                         >
                             <LinkIcon className="w-4 h-4" />
-                            Create New Link
-                        </a>
-                    </div>
-                </div>
-
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="p-2 bg-orange-50 rounded-lg">
-                                <TrendingUp className="w-6 h-6 text-[#ff6602]" />
-                            </div>
-                            <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">+12%</span>
-                        </div>
-                        <div className="text-3xl font-bold text-gray-900">{totalClicks}</div>
-                        <div className="text-sm text-gray-500">Total Clicks</div>
-                    </div>
-
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="p-2 bg-blue-50 rounded-lg">
-                                <LinkIcon className="w-6 h-6 text-blue-600" />
-                            </div>
-                        </div>
-                        <div className="text-3xl font-bold text-gray-900">{totalLinks}</div>
-                        <div className="text-sm text-gray-500">Active Links</div>
-                    </div>
-
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="p-2 bg-green-50 rounded-lg">
-                                <Smartphone className="w-6 h-6 text-green-600" />
-                            </div>
-                        </div>
-                        <div className="text-3xl font-bold text-gray-900">
-                            {pieData.length > 0 ? pieData.sort((a, b) => b.value - a.value)[0].name : 'N/A'}
-                        </div>
-                        <div className="text-sm text-gray-500">Top Platform</div>
-                    </div>
-
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="p-2 bg-purple-50 rounded-lg">
-                                <Globe className="w-6 h-6 text-purple-600" />
-                            </div>
-                        </div>
-                        <div className="text-3xl font-bold text-gray-900">
-                            {locationData.length > 0 ? locationData[0].name : 'N/A'}
-                        </div>
-                        <div className="text-sm text-gray-500">Top Country</div>
-                    </div>
-                </div>
-
-                {/* Charts Section */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Area Chart */}
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <h3 className="text-lg font-bold text-gray-900 mb-6">Clicks Overview (Last 7 Days)</h3>
-                        <div className="h-[300px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={clicksOverTime}>
-                                    <defs>
-                                        <linearGradient id="colorClicks" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#ff6602" stopOpacity={0.1} />
-                                            <stop offset="95%" stopColor="#ff6602" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} dy={10} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
-                                    <Tooltip
-                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px -2px rgb(0 0 0 / 0.1)' }}
-                                    />
-                                    <Area type="monotone" dataKey="count" stroke="#ff6602" strokeWidth={3} fillOpacity={1} fill="url(#colorClicks)" />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
-
-                    {/* Source Bar Chart */}
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <h3 className="text-lg font-bold text-gray-900 mb-6">Traffic Sources</h3>
-                        <div className="h-[300px] w-full">
-                            {barData.length > 0 ? (
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={barData} layout="vertical" margin={{ left: 20 }}>
-                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
-                                        <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
-                                        <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} width={80} />
-                                        <Tooltip
-                                            cursor={{ fill: '#f9fafb' }}
-                                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px -2px rgb(0 0 0 / 0.1)' }}
-                                        />
-                                        <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                                            {barData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={entry.color} />
-                                            ))}
-                                        </Bar>
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            ) : (
-                                <div className="h-full flex items-center justify-center text-gray-400">
-                                    No traffic data available
+                            <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
+                                <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
+                                    <h2 className="text-xl font-bold text-gray-900">Edit Link</h2>
+                                    <button
+                                        onClick={() => setEditingLink(null)}
+                                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                                    >
+                                        <X className="w-5 h-5 text-gray-500" />
+                                    </button>
                                 </div>
-                            )}
-                        </div>
-                    </div>
+                                <form onSubmit={handleUpdateLink} className="p-6 space-y-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">App Name</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={editingLink.title}
+                                            onChange={e => setEditingLink({ ...editingLink, title: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] focus:border-[#ff6602] text-gray-900"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                                        <textarea
+                                            value={editingLink.description || ''}
+                                            onChange={e => setEditingLink({ ...editingLink, description: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] focus:border-[#ff6602] text-gray-900"
+                                            rows={2}
+                                        />
+                                    </div>
 
-                    {/* Platform Pie Chart */}
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <h3 className="text-lg font-bold text-gray-900 mb-6">Platform Distribution</h3>
-                        <div className="h-[300px] w-full relative">
-                            {pieData.length > 0 ? (
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={pieData}
-                                            innerRadius={80}
-                                            outerRadius={100}
-                                            paddingAngle={5}
-                                            dataKey="value"
+                                    <div className="space-y-4">
+                                        <h3 className="font-medium text-gray-900">Platform URLs</h3>
+
+                                        <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
+                                            <div className="pt-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={editingLink.show_ios}
+                                                    onChange={e => setEditingLink({ ...editingLink, show_ios: e.target.checked })}
+                                                    className="w-4 h-4 text-[#ff6602] rounded focus:ring-[#ff6602]"
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">iOS App Store URL</label>
+                                                <input
+                                                    type="url"
+                                                    value={editingLink.ios_url || ''}
+                                                    onChange={e => setEditingLink({ ...editingLink, ios_url: e.target.value })}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] text-gray-900"
+                                                    placeholder="https://apps.apple.com/..."
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
+                                            <div className="pt-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={editingLink.show_android}
+                                                    onChange={e => setEditingLink({ ...editingLink, show_android: e.target.checked })}
+                                                    className="w-4 h-4 text-[#ff6602] rounded focus:ring-[#ff6602]"
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Android Play Store URL</label>
+                                                <input
+                                                    type="url"
+                                                    value={editingLink.android_url || ''}
+                                                    onChange={e => setEditingLink({ ...editingLink, android_url: e.target.value })}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] text-gray-900"
+                                                    placeholder="https://play.google.com/..."
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
+                                            <div className="pt-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={editingLink.show_web}
+                                                    onChange={e => setEditingLink({ ...editingLink, show_web: e.target.checked })}
+                                                    className="w-4 h-4 text-[#ff6602] rounded focus:ring-[#ff6602]"
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Website URL</label>
+                                                <input
+                                                    type="url"
+                                                    value={editingLink.web_url || ''}
+                                                    onChange={e => setEditingLink({ ...editingLink, web_url: e.target.value })}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] text-gray-900"
+                                                    placeholder="https://..."
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                                        <button
+                                            type="button"
+                                            onClick={() => setEditingLink(null)}
+                                            className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                                         >
-                                            {pieData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={entry.color} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip
-                                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px -2px rgb(0 0 0 / 0.1)' }}
-                                        />
-                                        <Legend verticalAlign="bottom" height={36} />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            ) : (
-                                <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                                    No data available
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Location Bar Chart */}
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <h3 className="text-lg font-bold text-gray-900 mb-6">Top Countries</h3>
-                        <div className="h-[300px] w-full">
-                            {locationData.length > 0 ? (
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={locationData} layout="vertical" margin={{ left: 20 }}>
-                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
-                                        <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
-                                        <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} width={80} />
-                                        <Tooltip
-                                            cursor={{ fill: '#f9fafb' }}
-                                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px -2px rgb(0 0 0 / 0.1)' }}
-                                        />
-                                        <Bar dataKey="value" fill="#8884d8" radius={[0, 4, 4, 0]} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            ) : (
-                                <div className="h-full flex items-center justify-center text-gray-400">
-                                    No location data available
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Links Table */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="p-6 border-b border-gray-100">
-                        <h3 className="text-lg font-bold text-gray-900">Your Links</h3>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">App Name</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Top Source</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Clicks</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Platform Split</th>
-                                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {links.map((link) => {
-                                    const ios = link.clicks.filter(c => c.platform === 'ios').length
-                                    const android = link.clicks.filter(c => c.platform === 'android').length
-                                    const web = link.clicks.filter(c => c.platform === 'web').length
-                                    const total = link.clicks.length
-
-                                    // Calculate top source for this link
-                                    const linkSourceStats = link.clicks.reduce((acc, click) => {
-                                        const s = click.source || 'direct'
-                                        acc[s] = (acc[s] || 0) + 1
-                                        return acc
-                                    }, {} as Record<string, number>)
-
-                                    const topSource = Object.entries(linkSourceStats)
-                                        .sort((a, b) => b[1] - a[1])[0]
-
-                                    return (
-                                        <tr key={link.id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="font-medium text-gray-900">{link.title}</div>
-                                                <div className="text-xs text-gray-500 truncate max-w-[200px]">
-                                                    {window.location.origin}/l/{link.id}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {new Date(link.created_at).toLocaleDateString()}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                {topSource ? (
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
-                                                        ${topSource[0] === 'tiktok' ? 'bg-black text-white' :
-                                                            topSource[0] === 'facebook' ? 'bg-blue-100 text-blue-800' :
-                                                                topSource[0] === 'instagram' ? 'bg-pink-100 text-pink-800' :
-                                                                    'bg-gray-100 text-gray-800'}`}>
-                                                        {topSource[0]} ({topSource[1]})
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-xs text-gray-400">-</span>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-bold text-gray-900">{total}</div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex h-2 w-24 rounded-full overflow-hidden bg-gray-100">
-                                                    {total > 0 && (
-                                                        <>
-                                                            <div style={{ width: `${(ios / total) * 100}%` }} className="bg-black" title="iOS" />
-                                                            <div style={{ width: `${(android / total) * 100}%` }} className="bg-[#3DDC84]" title="Android" />
-                                                            <div style={{ width: `${(web / total) * 100}%` }} className="bg-[#007fff]" title="Web" />
-                                                        </>
-                                                    )}
-                                                </div>
-                                                <div className="flex gap-2 mt-1 text-[10px] text-gray-400">
-                                                    {ios > 0 && <span>iOS: {ios}</span>}
-                                                    {android > 0 && <span>And: {android}</span>}
-                                                    {web > 0 && <span>Web: {web}</span>}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <div className="flex justify-end gap-2">
-                                                    <button
-                                                        onClick={() => handleCopy(link.id)}
-                                                        className="p-2 text-gray-400 hover:text-[#007fff] hover:bg-blue-50 rounded-lg transition-colors"
-                                                        title="Copy Link"
-                                                    >
-                                                        {copiedId === link.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                                                    </button>
-                                                    <a
-                                                        href={`/l/${link.id}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="p-2 text-gray-400 hover:text-[#ff6602] hover:bg-orange-50 rounded-lg transition-colors"
-                                                        title="Visit Link"
-                                                    >
-                                                        <ExternalLink className="w-4 h-4" />
-                                                    </a>
-                                                    <button
-                                                        onClick={() => setEditingLink(link)}
-                                                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                        title="Edit Link"
-                                                    >
-                                                        <Pencil className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(link.id, link.title)}
-                                                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                        title="Delete Link"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    )
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            {/* Edit Modal */}
-            {editingLink && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
-                        <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
-                            <h2 className="text-xl font-bold text-gray-900">Edit Link</h2>
-                            <button
-                                onClick={() => setEditingLink(null)}
-                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                            >
-                                <X className="w-5 h-5 text-gray-500" />
-                            </button>
-                        </div>
-                        <form onSubmit={handleUpdateLink} className="p-6 space-y-6">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">App Name</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={editingLink.title}
-                                    onChange={e => setEditingLink({ ...editingLink, title: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] focus:border-[#ff6602] text-gray-900"
-                                />
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={isSubmitting}
+                                            className="px-4 py-2 bg-[#ff6602] text-white rounded-lg hover:bg-[#e65a02] transition-colors disabled:opacity-50 flex items-center gap-2"
+                                        >
+                                            {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                                            Save Changes
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                                <textarea
-                                    value={editingLink.description || ''}
-                                    onChange={e => setEditingLink({ ...editingLink, description: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] focus:border-[#ff6602] text-gray-900"
-                                    rows={2}
-                                />
-                            </div>
-
-                            <div className="space-y-4">
-                                <h3 className="font-medium text-gray-900">Platform URLs</h3>
-
-                                <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-                                    <div className="pt-2">
-                                        <input
-                                            type="checkbox"
-                                            checked={editingLink.show_ios}
-                                            onChange={e => setEditingLink({ ...editingLink, show_ios: e.target.checked })}
-                                            className="w-4 h-4 text-[#ff6602] rounded focus:ring-[#ff6602]"
-                                        />
-                                    </div>
-                                    <div className="flex-1">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">iOS App Store URL</label>
-                                        <input
-                                            type="url"
-                                            value={editingLink.ios_url || ''}
-                                            onChange={e => setEditingLink({ ...editingLink, ios_url: e.target.value })}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] text-gray-900"
-                                            placeholder="https://apps.apple.com/..."
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-                                    <div className="pt-2">
-                                        <input
-                                            type="checkbox"
-                                            checked={editingLink.show_android}
-                                            onChange={e => setEditingLink({ ...editingLink, show_android: e.target.checked })}
-                                            className="w-4 h-4 text-[#ff6602] rounded focus:ring-[#ff6602]"
-                                        />
-                                    </div>
-                                    <div className="flex-1">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Android Play Store URL</label>
-                                        <input
-                                            type="url"
-                                            value={editingLink.android_url || ''}
-                                            onChange={e => setEditingLink({ ...editingLink, android_url: e.target.value })}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] text-gray-900"
-                                            placeholder="https://play.google.com/..."
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-                                    <div className="pt-2">
-                                        <input
-                                            type="checkbox"
-                                            checked={editingLink.show_web}
-                                            onChange={e => setEditingLink({ ...editingLink, show_web: e.target.checked })}
-                                            className="w-4 h-4 text-[#ff6602] rounded focus:ring-[#ff6602]"
-                                        />
-                                    </div>
-                                    <div className="flex-1">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Website URL</label>
-                                        <input
-                                            type="url"
-                                            value={editingLink.web_url || ''}
-                                            onChange={e => setEditingLink({ ...editingLink, web_url: e.target.value })}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] text-gray-900"
-                                            placeholder="https://..."
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                                <button
-                                    type="button"
-                                    onClick={() => setEditingLink(null)}
-                                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={isSubmitting}
-                                    className="px-4 py-2 bg-[#ff6602] text-white rounded-lg hover:bg-[#e65a02] transition-colors disabled:opacity-50 flex items-center gap-2"
-                                >
-                                    {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                                    Save Changes
-                                </button>
-                            </div>
-                        </form>
                     </div>
-                </div>
             )}
-        </main>
-    )
+                </main>
+                )
 }
