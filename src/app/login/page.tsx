@@ -41,8 +41,8 @@ export default function LoginPage() {
                 alert('Account created! Please check your email to verify your account.')
             }
             router.push('/')
-        } catch (error: any) {
-            alert(error.message || 'An error occurred')
+        } catch (error: unknown) {
+            alert((error as Error).message || 'An error occurred')
         } finally {
             setLoading(false)
         }

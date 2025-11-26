@@ -98,6 +98,7 @@ export default function RedirectPage() {
                 <div className="text-center">
                     {linkData.logo_url && (
                         <div className="mb-6 flex justify-center">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={linkData.logo_url}
                                 alt={linkData.title}
@@ -118,6 +119,7 @@ export default function RedirectPage() {
                             onClick={() => handleClick('ios', linkData.ios_url)}
                             className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-black text-white rounded-xl hover:bg-gray-900 transition-all active:scale-95 shadow-lg"
                         >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src="/apple-logo-svgrepo-com.svg" alt="Apple" className="w-6 h-6 brightness-0 invert" />
                             <div className="text-left">
                                 <div className="text-xs opacity-80">Download on the</div>
