@@ -110,7 +110,7 @@ export default function RedirectPage() {
                             onClick={() => handleClick('ios', linkData.ios_url)}
                             className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-black text-white rounded-xl hover:bg-gray-900 transition-all active:scale-95 shadow-lg"
                         >
-                            <Apple className="w-6 h-6" />
+                            <img src="/apple-logo-svgrepo-com.svg" alt="Apple" className="w-6 h-6 brightness-0 invert" />
                             <div className="text-left">
                                 <div className="text-xs opacity-80">Download on the</div>
                                 <div className="text-lg font-bold leading-none">App Store</div>
