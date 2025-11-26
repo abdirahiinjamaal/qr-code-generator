@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import * as XLSX from 'xlsx'
 import {
     Loader2,
     ExternalLink,
@@ -174,7 +175,120 @@ export default function Dashboard() {
         }
     }
 
-    const handleExport = () => {
+    const handleExportExcel = () => {
+        // Create workbook
+        const wb = XLSX.utils.book_new()
+
+        // 1. Summary Sheet
+        const summaryData = [
+            ['QR Code Analytics Report'],
+            ['Generated:', new Date().toLocaleString()],
+            [''],
+            ['Overview'],
+            ['Total Links', totalLinks],
+            ['Total Clicks', totalClicks],
+            ['Average Clicks per Link', totalLinks > 0 ? (totalClicks / totalLinks).toFixed(2) : 0],
+            [''],
+            ['Platform Distribution'],
+            ['iOS Clicks', platformStats['ios'] || 0],
+            ['Android Clicks', platformStats['android'] || 0],
+            ['Web Clicks', platformStats['web'] || 0],
+            [''],
+            ['Top Sources'],
+            ...barData.slice(0, 5).map(s => [s.name, s.value]),
+            [''],
+            ['Top Countries'],
+            ...locationData.slice(0, 5).map(l => [l.name, l.value])
+        ]
+        const summarySheet = XLSX.utils.aoa_to_sheet(summaryData)
+        summarySheet['!cols'] = [{ wch: 25 }, { wch: 15 }]
+        XLSX.utils.book_append_sheet(wb, summarySheet, 'Summary')
+
+        // 2. Links Sheet
+        const linksData = [
+            ['Link ID', 'Title', 'Description', 'Created Date', 'Total Clicks', 'iOS Clicks', 'Android Clicks', 'Web Clicks', 'Link URL'],
+            ...links.map(link => {
+                const ios = link.clicks.filter(c => c.platform === 'ios').length
+                const android = link.clicks.filter(c => c.platform === 'android').length
+                const web = link.clicks.filter(c => c.platform === 'web').length
+                return [
+                    link.id,
+                    link.title,
+                    link.description || '',
+                    new Date(link.created_at).toLocaleDateString(),
+                    link.clicks.length,
+                    ios,
+                    android,
+                    web,
+                    `${window.location.origin}/l/${link.id}`
+                ]
+            })
+        ]
+        const linksSheet = XLSX.utils.aoa_to_sheet(linksData)
+        linksSheet['!cols'] = [
+            { wch: 10 }, { wch: 20 }, { wch: 30 }, { wch: 12 },
+            { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 40 }
+        ]
+        XLSX.utils.book_append_sheet(wb, linksSheet, 'Links')
+
+        // 3. Detailed Clicks Sheet
+        const clicksData = [
+            ['Link Title', 'Click Date', 'Platform', 'Source', 'Country', 'City'],
+            ...links.flatMap(link =>
+                link.clicks.map(click => [
+                    link.title,
+                    new Date(click.created_at).toLocaleString(),
+                    click.platform,
+                    click.source || 'direct',
+                    click.country || 'Unknown',
+                    click.city || 'Unknown'
+                ])
+            )
+        ]
+        const clicksSheet = XLSX.utils.aoa_to_sheet(clicksData)
+        clicksSheet['!cols'] = [{ wch: 20 }, { wch: 20 }, { wch: 12 }, { wch: 15 }, { wch: 15 }, { wch: 15 }]
+        XLSX.utils.book_append_sheet(wb, clicksSheet, 'All Clicks')
+
+        // 4. Daily Analytics Sheet
+        const dailyData = [
+            ['Date', 'Clicks'],
+            ...clicksOverTime.map(day => [day.date, day.count])
+        ]
+        const dailySheet = XLSX.utils.aoa_to_sheet(dailyData)
+        dailySheet['!cols'] = [{ wch: 15 }, { wch: 10 }]
+        XLSX.utils.book_append_sheet(wb, dailySheet, 'Daily Clicks')
+
+        // 5. Source Analytics Sheet
+        const sourceData = [
+            ['Source', 'Clicks', 'Percentage'],
+            ...barData.map(s => [
+                s.name,
+                s.value,
+                `${((s.value / totalClicks) * 100).toFixed(1)}%`
+            ])
+        ]
+        const sourceSheet = XLSX.utils.aoa_to_sheet(sourceData)
+        sourceSheet['!cols'] = [{ wch: 15 }, { wch: 10 }, { wch: 12 }]
+        XLSX.utils.book_append_sheet(wb, sourceSheet, 'Sources')
+
+        // 6. Location Analytics Sheet
+        const locationAnalyticsData = [
+            ['Country', 'Clicks', 'Percentage'],
+            ...locationData.map(l => [
+                l.name,
+                l.value,
+                `${((l.value / totalClicks) * 100).toFixed(1)}%`
+            ])
+        ]
+        const locationSheet = XLSX.utils.aoa_to_sheet(locationAnalyticsData)
+        locationSheet['!cols'] = [{ wch: 20 }, { wch: 10 }, { wch: 12 }]
+        XLSX.utils.book_append_sheet(wb, locationSheet, 'Locations')
+
+        // Export
+        XLSX.writeFile(wb, `QR_Analytics_${new Date().toISOString().split('T')[0]}.xlsx`)
+    }
+
+    const handleExportCSV = () => {
         const csvContent = [
             ['Link Title', 'Created At', 'Total Clicks', 'iOS Clicks', 'Android Clicks', 'Web Clicks', 'Link URL'],
             ...links.map(link => {
@@ -288,7 +402,14 @@ export default function Dashboard() {
                     </div>
                     <div className="flex gap-3">
                         <button
-                            onClick={handleExport}
+                            onClick={handleExportExcel}
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors shadow-sm"
+                        >
+                            <Download className="w-4 h-4" />
+                            Export Excel
+                        </button>
+                        <button
+                            onClick={handleExportCSV}
                             className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
                         >
                             <Download className="w-4 h-4" />
@@ -309,8 +430,8 @@ export default function Dashboard() {
                     <button
                         onClick={() => setActiveTab('overview')}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'overview'
-                                ? 'bg-[#ff6602] text-white shadow-md'
-                                : 'text-gray-600 hover:bg-gray-50'
+                            ? 'bg-[#ff6602] text-white shadow-md'
+                            : 'text-gray-600 hover:bg-gray-50'
                             }`}
                     >
                         <LayoutDashboard className="w-4 h-4" />
@@ -319,8 +440,8 @@ export default function Dashboard() {
                     <button
                         onClick={() => setActiveTab('audience')}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'audience'
-                                ? 'bg-[#ff6602] text-white shadow-md'
-                                : 'text-gray-600 hover:bg-gray-50'
+                            ? 'bg-[#ff6602] text-white shadow-md'
+                            : 'text-gray-600 hover:bg-gray-50'
                             }`}
                     >
                         <Users className="w-4 h-4" />
@@ -329,8 +450,8 @@ export default function Dashboard() {
                     <button
                         onClick={() => setActiveTab('sources')}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'sources'
-                                ? 'bg-[#ff6602] text-white shadow-md'
-                                : 'text-gray-600 hover:bg-gray-50'
+                            ? 'bg-[#ff6602] text-white shadow-md'
+                            : 'text-gray-600 hover:bg-gray-50'
                             }`}
                     >
                         <Share2 className="w-4 h-4" />
@@ -339,8 +460,8 @@ export default function Dashboard() {
                     <button
                         onClick={() => setActiveTab('links')}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'links'
-                                ? 'bg-[#ff6602] text-white shadow-md'
-                                : 'text-gray-600 hover:bg-gray-50'
+                            ? 'bg-[#ff6602] text-white shadow-md'
+                            : 'text-gray-600 hover:bg-gray-50'
                             }`}
                     >
                         <LinkIcon className="w-4 h-4" />
