@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Loader2, BarChart3, ExternalLink } from 'lucide-react'
+import { Loader2, BarChart3, ExternalLink, Trash2 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
 interface LinkStats {
@@ -53,6 +53,28 @@ export default function Dashboard() {
 
         fetchStats()
     }, [router])
+
+    const handleDelete = async (linkId: string, linkTitle: string) => {
+        if (!confirm(`Are you sure you want to delete "${linkTitle}"? This will also delete all associated click data.`)) {
+            return
+        }
+
+        try {
+            const { error } = await supabase
+                .from('links')
+                .delete()
+                .eq('id', linkId)
+
+            if (error) throw error
+
+            // Remove from local state
+            setLinks(links.filter(link => link.id !== linkId))
+            alert('✅ Link deleted successfully')
+        } catch (error) {
+            console.error('Error deleting link:', error)
+            alert('❌ Failed to delete link')
+        }
+    }
 
     if (loading) {
         return (
@@ -104,14 +126,24 @@ export default function Dashboard() {
                                                 {new Date(link.created_at).toLocaleDateString()}
                                             </p>
                                         </div>
-                                        <a
-                                            href={`/l/${link.id}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-gray-400 hover:text-blue-600 transition-colors"
-                                        >
-                                            <ExternalLink className="w-5 h-5" />
-                                        </a>
+                                        <div className="flex gap-2">
+                                            <a
+                                                href={`/l/${link.id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-gray-400 hover:text-blue-600 transition-colors"
+                                                title="Open link"
+                                            >
+                                                <ExternalLink className="w-5 h-5" />
+                                            </a>
+                                            <button
+                                                onClick={() => handleDelete(link.id, link.title)}
+                                                className="text-gray-400 hover:text-red-600 transition-colors"
+                                                title="Delete link"
+                                            >
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <div className="mb-6">
