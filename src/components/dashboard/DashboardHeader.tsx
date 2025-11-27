@@ -61,7 +61,7 @@ export function DashboardHeader({ links }: DashboardHeaderProps) {
                     Export CSV
                 </button>
                 <a
-                    href="/"
+                    href="/create"
                     className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[#ff6602] text-white rounded-xl hover:bg-[#e65a02] transition-colors shadow-sm whitespace-nowrap"
                 >
                     <LinkIcon className="w-4 h-4" />
