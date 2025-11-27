@@ -27,7 +27,25 @@ export default function LoginPage() {
             if (error) throw error
 
             toast.success('Logged in successfully!')
-            router.push('/')
+
+            // Check if user is admin and redirect accordingly
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+                const { data: roleData } = await supabase
+                    .from('user_roles')
+                    .select('is_admin')
+                    .eq('id', user.id)
+                    .single()
+
+                // Redirect to dashboard if admin, otherwise to home
+                if (roleData?.is_admin) {
+                    router.push('/dashboard')
+                } else {
+                    router.push('/')
+                }
+            } else {
+                router.push('/')
+            }
         } catch (error: unknown) {
             toast.error((error as Error).message || 'Invalid credentials')
         } finally {
