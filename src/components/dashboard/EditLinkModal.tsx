@@ -111,7 +111,7 @@ export function EditLinkModal({ link, onClose, onUpdate }: EditLinkModalProps) {
                         </label>
                         <input
                             type="text"
-                            value={editingLink.title}
+                            value={editingLink.title || ''}
                             onChange={(e) => setEditingLink({ ...editingLink, title: e.target.value })}
                             className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ff6602] focus:border-transparent"
                             required
@@ -123,7 +123,7 @@ export function EditLinkModal({ link, onClose, onUpdate }: EditLinkModalProps) {
                             Description
                         </label>
                         <textarea
-                            value={editingLink.description}
+                            value={editingLink.description || ''}
                             onChange={(e) => setEditingLink({ ...editingLink, description: e.target.value })}
                             className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ff6602] focus:border-transparent"
                             rows={3}
@@ -143,7 +143,7 @@ export function EditLinkModal({ link, onClose, onUpdate }: EditLinkModalProps) {
                             </label>
                             <input
                                 type="url"
-                                value={editingLink.ios_url}
+                                value={editingLink.ios_url || ''}
                                 onChange={(e) => setEditingLink({ ...editingLink, ios_url: e.target.value })}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ff6602] focus:border-transparent"
                                 disabled={!editingLink.show_ios}
@@ -162,7 +162,7 @@ export function EditLinkModal({ link, onClose, onUpdate }: EditLinkModalProps) {
                             </label>
                             <input
                                 type="url"
-                                value={editingLink.android_url}
+                                value={editingLink.android_url || ''}
                                 onChange={(e) => setEditingLink({ ...editingLink, android_url: e.target.value })}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ff6602] focus:border-transparent"
                                 disabled={!editingLink.show_android}
@@ -181,7 +181,7 @@ export function EditLinkModal({ link, onClose, onUpdate }: EditLinkModalProps) {
                             </label>
                             <input
                                 type="url"
-                                value={editingLink.web_url}
+                                value={editingLink.web_url || ''}
                                 onChange={(e) => setEditingLink({ ...editingLink, web_url: e.target.value })}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ff6602] focus:border-transparent"
                                 disabled={!editingLink.show_web}
@@ -230,7 +230,7 @@ export function EditLinkModal({ link, onClose, onUpdate }: EditLinkModalProps) {
                                 step="0.1"
                                 min="0"
                                 max="5"
-                                value={editingLink.rating}
+                                value={editingLink.rating || 0}
                                 onChange={(e) => setEditingLink({ ...editingLink, rating: parseFloat(e.target.value) })}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ff6602] focus:border-transparent"
                             />
@@ -241,7 +241,7 @@ export function EditLinkModal({ link, onClose, onUpdate }: EditLinkModalProps) {
                             </label>
                             <input
                                 type="number"
-                                value={editingLink.review_count}
+                                value={editingLink.review_count || 0}
                                 onChange={(e) => setEditingLink({ ...editingLink, review_count: parseInt(e.target.value) })}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ff6602] focus:border-transparent"
                             />
