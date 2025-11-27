@@ -116,14 +116,15 @@ export default function RedirectPage() {
             <div className="w-full max-w-md space-y-8">
                 {/* App Screenshots (Top Banner) */}
                 {linkData.screenshots && linkData.screenshots.length > 0 && (
-                    <div className="mb-6">
-                        <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory no-scrollbar justify-center">
-                            {linkData.screenshots.map((src, index) => (
+                    <div className="mb-6 w-full overflow-hidden relative mask-linear-fade">
+                        {/* Duplicate the array 4 times to ensure smooth infinite scrolling even with few images */}
+                        <div className="flex gap-3 w-max animate-scroll">
+                            {[...linkData.screenshots, ...linkData.screenshots, ...linkData.screenshots, ...linkData.screenshots].map((src, index) => (
                                 <img
                                     key={index}
                                     src={src}
                                     alt={`Screenshot ${index + 1}`}
-                                    className="w-24 h-auto rounded-lg shadow-sm border border-gray-100 flex-shrink-0 snap-center"
+                                    className="w-24 h-auto rounded-lg shadow-sm border border-gray-100 flex-shrink-0"
                                 />
                             ))}
                         </div>
