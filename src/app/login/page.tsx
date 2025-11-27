@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Loader2, Link as LinkIcon } from 'lucide-react'
@@ -11,6 +11,26 @@ export default function LoginPage() {
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const router = useRouter()
+
+    // Check for and clear invalid sessions
+    useEffect(() => {
+        const checkSession = async () => {
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession()
+
+                // If there's an auth error (like invalid refresh token), clear the session
+                if (error) {
+                    console.error('Session error:', error.message)
+                    await supabase.auth.signOut()
+                }
+            } catch (error) {
+                console.error('Error checking session:', error)
+                await supabase.auth.signOut()
+            }
+        }
+
+        checkSession()
+    }, [])
 
     // Note: We don't auto-redirect logged-in users here to avoid redirect loops
     // If a non-admin is logged in, they can logout and try a different account
