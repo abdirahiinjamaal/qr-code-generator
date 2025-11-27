@@ -51,7 +51,8 @@ export function EditLinkModal({ link, onClose, onUpdate }: EditLinkModalProps) {
     }
 
     const handleRemoveScreenshot = (indexToRemove: number) => {
-        const newScreenshots = editingLink.screenshots.filter((_, index) => index !== indexToRemove)
+        const currentScreenshots = editingLink.screenshots || []
+        const newScreenshots = currentScreenshots.filter((_, index) => index !== indexToRemove)
         setEditingLink({ ...editingLink, screenshots: newScreenshots })
     }
 
@@ -200,7 +201,7 @@ export function EditLinkModal({ link, onClose, onUpdate }: EditLinkModalProps) {
                             className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ff6602] focus:border-transparent"
                         />
                         <div className="mt-4 grid grid-cols-3 gap-4">
-                            {editingLink.screenshots.map((url, idx) => (
+                            {(editingLink.screenshots || []).map((url, idx) => (
                                 <div key={idx} className="relative group">
                                     <img
                                         src={url}
