@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Loader2, Link as LinkIcon } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 export default function LoginPage() {
-    const [isLogin, setIsLogin] = useState(true)
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
@@ -26,23 +26,16 @@ export default function LoginPage() {
         setLoading(true)
 
         try {
-            if (isLogin) {
-                const { error } = await supabase.auth.signInWithPassword({
-                    email,
-                    password,
-                })
-                if (error) throw error
-            } else {
-                const { error } = await supabase.auth.signUp({
-                    email,
-                    password,
-                })
-                if (error) throw error
-                alert('Account created! Please check your email to verify your account.')
-            }
+            const { error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            })
+            if (error) throw error
+
+            toast.success('Logged in successfully!')
             router.push('/')
         } catch (error: unknown) {
-            alert((error as Error).message || 'An error occurred')
+            toast.error((error as Error).message || 'Invalid credentials')
         } finally {
             setLoading(false)
         }
@@ -56,9 +49,8 @@ export default function LoginPage() {
                         <LinkIcon className="w-8 h-8 text-[#ff6602]" />
                         <h1 className="text-3xl font-bold text-gray-900">Universal QR</h1>
                     </div>
-                    <p className="text-gray-600">
-                        {isLogin ? 'Sign in to your account' : 'Create a new account'}
-                    </p>
+                    <p className="text-gray-600">Admin Login</p>
+                    <p className="text-sm text-gray-500 mt-2">Sign in to access the QR code generator</p>
                 </div>
 
                 <div className="bg-white shadow-xl rounded-2xl p-8">
@@ -73,7 +65,7 @@ export default function LoginPage() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#007fff] focus:border-[#007fff] transition-colors text-gray-900"
-                                placeholder="you@example.com"
+                                placeholder="admin@example.com"
                             />
                         </div>
 
@@ -99,23 +91,17 @@ export default function LoginPage() {
                         >
                             {loading ? (
                                 <Loader2 className="w-5 h-5 animate-spin" />
-                            ) : isLogin ? (
-                                'Sign In'
                             ) : (
-                                'Sign Up'
+                                'Sign In'
                             )}
                         </button>
                     </form>
 
-                    <div className="mt-6 text-center">
-                        <button
-                            onClick={() => setIsLogin(!isLogin)}
-                            className="text-sm text-[#ff6602] hover:text-[#e65a02] font-medium"
-                        >
-                            {isLogin
-                                ? "Don't have an account? Sign up"
-                                : 'Already have an account? Sign in'}
-                        </button>
+                    <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p className="text-xs text-yellow-800">
+                            <strong>Admin Access Only:</strong> This application is restricted to authorized administrators.
+                            Contact your system administrator for access.
+                        </p>
                     </div>
                 </div>
             </div>
