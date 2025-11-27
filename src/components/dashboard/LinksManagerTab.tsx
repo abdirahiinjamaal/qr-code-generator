@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { ExternalLink, Trash2, Copy, Check, Pencil } from 'lucide-react'
+import { ExternalLink, Trash2, Copy, Check, Pencil, QrCode } from 'lucide-react'
 import { LinkStats } from '@/types/dashboard'
 import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
+import { ViewQRCodeModal } from './ViewQRCodeModal'
 
 interface LinksManagerTabProps {
     links: LinkStats[]
@@ -14,6 +15,7 @@ interface LinksManagerTabProps {
 
 export function LinksManagerTab({ links, onLinksChange, onEditLink }: LinksManagerTabProps) {
     const [copiedId, setCopiedId] = useState<string | null>(null)
+    const [viewingQRLink, setViewingQRLink] = useState<LinkStats | null>(null)
 
     const handleDelete = async (linkId: string, linkTitle: string) => {
         if (!confirm(`Are you sure you want to delete "${linkTitle}"? This will also delete all associated click data.`)) {
@@ -117,6 +119,13 @@ export function LinksManagerTab({ links, onLinksChange, onEditLink }: LinksManag
                                                     <Copy className="w-4 h-4 text-gray-600" />
                                                 )}
                                             </button>
+                                            <button
+                                                onClick={() => setViewingQRLink(link)}
+                                                className="p-2 hover:bg-orange-50 rounded-lg transition-colors"
+                                                title="View QR Code"
+                                            >
+                                                <QrCode className="w-4 h-4 text-[#ff6602]" />
+                                            </button>
                                             <a
                                                 href={`/l/${link.id}`}
                                                 target="_blank"
@@ -153,6 +162,12 @@ export function LinksManagerTab({ links, onLinksChange, onEditLink }: LinksManag
                     </div>
                 )}
             </div>
+            {viewingQRLink && (
+                <ViewQRCodeModal
+                    link={viewingQRLink}
+                    onClose={() => setViewingQRLink(null)}
+                />
+            )}
         </div>
     )
 }

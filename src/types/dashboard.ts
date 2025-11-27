@@ -17,6 +17,7 @@ export interface LinkStats {
     show_ios: boolean
     show_android: boolean
     show_web: boolean
+    logo_url: string | null
     screenshots: string[]
     rating: number
     review_count: number

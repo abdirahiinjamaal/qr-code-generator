@@ -32,6 +32,7 @@ export function useDashboardData() {
                         show_ios,
                         show_android,
                         show_web,
+                        logo_url,
                         screenshots,
                         rating,
                         review_count,
