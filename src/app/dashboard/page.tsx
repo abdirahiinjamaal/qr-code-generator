@@ -56,7 +56,6 @@ interface LinkStats {
     show_ios: boolean
     show_android: boolean
     show_web: boolean
-    show_web: boolean
     screenshots: string[]
     rating: number
     review_count: number
