@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Loader2, Smartphone, Globe, AlertCircle } from 'lucide-react'
+import { Loader2, Smartphone, Globe, AlertCircle, Star } from 'lucide-react'
 
 interface LinkData {
     id: string
@@ -16,6 +16,9 @@ interface LinkData {
     show_ios: boolean
     show_android: boolean
     show_web: boolean
+    screenshots: string[]
+    rating: number
+    review_count: number
 }
 
 export default function RedirectPage() {
@@ -126,7 +129,23 @@ export default function RedirectPage() {
                         </div>
                     )}
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">{linkData.title}</h1>
-                    <p className="text-gray-600">{linkData.description || 'Kala soo Deg Appka Caawiye Playstoreka ama App Storeka'}</p>
+                    <p className="text-gray-600 mb-4">{linkData.description || 'Kala soo Deg Appka Caawiye Playstoreka ama App Storeka'}</p>
+
+                    {/* Social Proof */}
+                    {(linkData.rating > 0 || linkData.review_count > 0) && (
+                        <div className="flex items-center justify-center gap-2 mb-6">
+                            <div className="flex items-center text-yellow-400">
+                                <span className="text-gray-900 font-bold text-lg mr-1">{linkData.rating || '4.9'}</span>
+                                <Star className="w-5 h-5 fill-current" />
+                                <Star className="w-5 h-5 fill-current" />
+                                <Star className="w-5 h-5 fill-current" />
+                                <Star className="w-5 h-5 fill-current" />
+                                <Star className="w-5 h-5 fill-current" />
+                            </div>
+                            <span className="text-gray-400 text-sm">•</span>
+                            <span className="text-gray-500 text-sm">{linkData.review_count ? `${linkData.review_count}+ Reviews` : '1k+ Reviews'}</span>
+                        </div>
+                    )}
                 </div>
 
                 <div className="space-y-4">
@@ -172,6 +191,23 @@ export default function RedirectPage() {
                         </button>
                     )}
                 </div>
+
+                {/* App Screenshots */}
+                {linkData.screenshots && linkData.screenshots.length > 0 && (
+                    <div className="mt-8">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">Preview</h3>
+                        <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory no-scrollbar">
+                            {linkData.screenshots.map((src, index) => (
+                                <img
+                                    key={index}
+                                    src={src}
+                                    alt={`Screenshot ${index + 1}`}
+                                    className="w-48 h-auto rounded-xl shadow-md border border-gray-100 flex-shrink-0 snap-center"
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 <div className="text-center text-sm text-gray-400 mt-8">
                     Powered by Caawiye.com

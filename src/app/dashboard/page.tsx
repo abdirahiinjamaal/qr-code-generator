@@ -56,6 +56,10 @@ interface LinkStats {
     show_ios: boolean
     show_android: boolean
     show_web: boolean
+    show_web: boolean
+    screenshots: string[]
+    rating: number
+    review_count: number
     clicks: ClickData[]
 }
 
@@ -90,6 +94,9 @@ export default function Dashboard() {
                         show_ios,
                         show_android,
                         show_web,
+                        screenshots,
+                        rating,
+                        review_count,
                         clicks (
                             platform,
                             source,
@@ -140,6 +147,45 @@ export default function Dashboard() {
         setTimeout(() => setCopiedId(null), 2000)
     }
 
+    const handleScreenshotUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || !e.target.files.length || !editingLink) return
+
+        const files = Array.from(e.target.files)
+        const newScreenshots = [...(editingLink.screenshots || [])]
+        setIsSubmitting(true)
+
+        try {
+            for (const file of files) {
+                const fileExt = file.name.split('.').pop()
+                const fileName = `${editingLink.id}/${Math.random()}.${fileExt}`
+                const { error: uploadError } = await supabase.storage
+                    .from('screenshots')
+                    .upload(fileName, file)
+
+                if (uploadError) throw uploadError
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('screenshots')
+                    .getPublicUrl(fileName)
+
+                newScreenshots.push(publicUrl)
+            }
+
+            setEditingLink({ ...editingLink, screenshots: newScreenshots })
+        } catch (error) {
+            console.error('Error uploading screenshot:', error)
+            alert('❌ Failed to upload screenshot')
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
+    const handleRemoveScreenshot = (indexToRemove: number) => {
+        if (!editingLink) return
+        const newScreenshots = editingLink.screenshots.filter((_, index) => index !== indexToRemove)
+        setEditingLink({ ...editingLink, screenshots: newScreenshots })
+    }
+
     const handleUpdateLink = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!editingLink) return
@@ -157,6 +203,9 @@ export default function Dashboard() {
                     show_ios: editingLink.show_ios,
                     show_android: editingLink.show_android,
                     show_web: editingLink.show_web,
+                    screenshots: editingLink.screenshots,
+                    rating: editingLink.rating,
+                    review_count: editingLink.review_count,
                 })
                 .eq('id', editingLink.id)
 
@@ -309,8 +358,8 @@ export default function Dashboard() {
                     <button
                         onClick={() => setActiveTab('overview')}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'overview'
-                                ? 'bg-[#ff6602] text-white shadow-md'
-                                : 'text-gray-600 hover:bg-gray-50'
+                            ? 'bg-[#ff6602] text-white shadow-md'
+                            : 'text-gray-600 hover:bg-gray-50'
                             }`}
                     >
                         <LayoutDashboard className="w-4 h-4" />
@@ -319,8 +368,8 @@ export default function Dashboard() {
                     <button
                         onClick={() => setActiveTab('audience')}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'audience'
-                                ? 'bg-[#ff6602] text-white shadow-md'
-                                : 'text-gray-600 hover:bg-gray-50'
+                            ? 'bg-[#ff6602] text-white shadow-md'
+                            : 'text-gray-600 hover:bg-gray-50'
                             }`}
                     >
                         <Users className="w-4 h-4" />
@@ -329,8 +378,8 @@ export default function Dashboard() {
                     <button
                         onClick={() => setActiveTab('sources')}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'sources'
-                                ? 'bg-[#ff6602] text-white shadow-md'
-                                : 'text-gray-600 hover:bg-gray-50'
+                            ? 'bg-[#ff6602] text-white shadow-md'
+                            : 'text-gray-600 hover:bg-gray-50'
                             }`}
                     >
                         <Share2 className="w-4 h-4" />
@@ -339,8 +388,8 @@ export default function Dashboard() {
                     <button
                         onClick={() => setActiveTab('links')}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'links'
-                                ? 'bg-[#ff6602] text-white shadow-md'
-                                : 'text-gray-600 hover:bg-gray-50'
+                            ? 'bg-[#ff6602] text-white shadow-md'
+                            : 'text-gray-600 hover:bg-gray-50'
                             }`}
                     >
                         <LinkIcon className="w-4 h-4" />
@@ -711,6 +760,75 @@ export default function Dashboard() {
                                         />
                                     </div>
                                 </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <h3 className="font-medium text-gray-900">Social Proof</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">App Rating (0-5)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="5"
+                                            step="0.1"
+                                            value={editingLink.rating || ''}
+                                            onChange={e => setEditingLink({ ...editingLink, rating: parseFloat(e.target.value) })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] text-gray-900"
+                                            placeholder="4.9"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Review Count</label>
+                                        <input
+                                            type="number"
+                                            value={editingLink.review_count || ''}
+                                            onChange={e => setEditingLink({ ...editingLink, review_count: parseInt(e.target.value) })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff6602] text-gray-900"
+                                            placeholder="1000"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <h3 className="font-medium text-gray-900">App Screenshots</h3>
+                                <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-[#ff6602] transition-colors">
+                                    <input
+                                        type="file"
+                                        multiple
+                                        accept="image/*"
+                                        onChange={handleScreenshotUpload}
+                                        className="hidden"
+                                        id="screenshot-upload"
+                                    />
+                                    <label htmlFor="screenshot-upload" className="cursor-pointer flex flex-col items-center gap-2">
+                                        <Smartphone className="w-8 h-8 text-gray-400" />
+                                        <span className="text-sm text-gray-600">Click to upload screenshots</span>
+                                        <span className="text-xs text-gray-400">Recommended: Portrait mode images</span>
+                                    </label>
+                                </div>
+
+                                {editingLink.screenshots && editingLink.screenshots.length > 0 && (
+                                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
+                                        {editingLink.screenshots.map((src, index) => (
+                                            <div key={index} className="relative group aspect-[9/16]">
+                                                <img
+                                                    src={src}
+                                                    alt={`Screenshot ${index + 1}`}
+                                                    className="w-full h-full object-cover rounded-lg border border-gray-200"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveScreenshot(index)}
+                                                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
