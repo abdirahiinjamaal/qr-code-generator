@@ -114,6 +114,22 @@ export default function RedirectPage() {
     return (
         <main className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
             <div className="w-full max-w-md space-y-8">
+                {/* App Screenshots (Top Banner) */}
+                {linkData.screenshots && linkData.screenshots.length > 0 && (
+                    <div className="mb-6">
+                        <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory no-scrollbar justify-center">
+                            {linkData.screenshots.map((src, index) => (
+                                <img
+                                    key={index}
+                                    src={src}
+                                    alt={`Screenshot ${index + 1}`}
+                                    className="w-24 h-auto rounded-lg shadow-sm border border-gray-100 flex-shrink-0 snap-center"
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 <div className="text-center">
                     {linkData.logo_url && (
                         <div className="mb-6 flex justify-center">
@@ -192,22 +208,7 @@ export default function RedirectPage() {
                     )}
                 </div>
 
-                {/* App Screenshots */}
-                {linkData.screenshots && linkData.screenshots.length > 0 && (
-                    <div className="mt-8">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">Preview</h3>
-                        <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory no-scrollbar">
-                            {linkData.screenshots.map((src, index) => (
-                                <img
-                                    key={index}
-                                    src={src}
-                                    alt={`Screenshot ${index + 1}`}
-                                    className="w-48 h-auto rounded-xl shadow-md border border-gray-100 flex-shrink-0 snap-center"
-                                />
-                            ))}
-                        </div>
-                    </div>
-                )}
+
 
                 <div className="text-center text-sm text-gray-400 mt-8">
                     Powered by Caawiye.com
