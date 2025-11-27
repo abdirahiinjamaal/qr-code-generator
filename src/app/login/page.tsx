@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Loader2, Link as LinkIcon } from 'lucide-react'
@@ -12,14 +12,8 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false)
     const router = useRouter()
 
-    useEffect(() => {
-        // Check if already logged in
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) {
-                router.push('/')
-            }
-        })
-    }, [router])
+    // Note: We don't auto-redirect logged-in users here to avoid redirect loops
+    // If a non-admin is logged in, they can logout and try a different account
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()

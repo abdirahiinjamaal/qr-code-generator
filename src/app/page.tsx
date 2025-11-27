@@ -68,14 +68,20 @@ export default function Home() {
                         <ShieldAlert className="w-8 h-8 text-red-600" />
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
-                    <p className="text-gray-600 mb-6">
+                    <p className="text-gray-600 mb-2">
                         This QR code generator is restricted to administrators only.
                     </p>
+                    <p className="text-sm text-gray-500 mb-6">
+                        If you believe this is an error, contact your system administrator.
+                    </p>
                     <button
-                        onClick={() => router.push('/login')}
+                        onClick={async () => {
+                            await handleLogout()
+                            router.push('/login')
+                        }}
                         className="px-6 py-3 bg-[#ff6602] text-white rounded-lg hover:bg-[#e65a02] transition-colors"
                     >
-                        Return to Login
+                        Logout & Return to Login
                     </button>
                 </div>
             </main>
