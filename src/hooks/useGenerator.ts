@@ -11,7 +11,8 @@ export function useGenerator() {
     const router = useRouter()
     const [user, setUser] = useState<User | null>(null)
     const [isAdmin, setIsAdmin] = useState(false)
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState(false) // Form loading state
+    const [authLoading, setAuthLoading] = useState(true) // Auth check loading state
     const [generatedLink, setGeneratedLink] = useState<string | null>(null)
     const [qrValue, setQrValue] = useState<string | null>(null)
     const [activeSource, setActiveSource] = useState<string | null>(null)
@@ -38,13 +39,25 @@ export function useGenerator() {
     }, [generatedLink])
 
     useEffect(() => {
-        supabase.auth.getSession().then(async ({ data: { session } }) => {
-            setUser(session?.user ?? null)
-            if (session?.user) {
-                const adminStatus = await isUserAdmin()
-                setIsAdmin(adminStatus)
+        const checkAuth = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession()
+                setUser(session?.user ?? null)
+
+                if (session?.user) {
+                    const adminStatus = await isUserAdmin()
+                    setIsAdmin(adminStatus)
+                } else {
+                    setIsAdmin(false)
+                }
+            } catch (error) {
+                console.error('Auth check error:', error)
+            } finally {
+                setAuthLoading(false)
             }
-        })
+        }
+
+        checkAuth()
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             setUser(session?.user ?? null)
@@ -54,6 +67,7 @@ export function useGenerator() {
             } else {
                 setIsAdmin(false)
             }
+            // Note: We don't set authLoading here as it's for initial load
         })
 
         return () => subscription.unsubscribe()
@@ -158,6 +172,7 @@ export function useGenerator() {
         user,
         isAdmin,
         loading,
+        authLoading,
         formData,
         updateFormData,
         generatedLink,

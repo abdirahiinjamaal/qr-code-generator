@@ -14,6 +14,7 @@ export default function CreatePage() {
         user,
         isAdmin,
         loading,
+        authLoading,
         formData,
         updateFormData,
         qrValue,
@@ -24,12 +25,14 @@ export default function CreatePage() {
         handleLogout
     } = useGenerator()
 
-    // Redirect non-admins only after loading is complete
+    // Redirect if not logged in or not admin
     useEffect(() => {
-        if (!loading && user && !isAdmin) {
-            router.push('/login')
+        if (!authLoading) {
+            if (!user || !isAdmin) {
+                router.push('/login')
+            }
         }
-    }, [user, isAdmin, loading, router])
+    }, [user, isAdmin, authLoading, router])
 
     const handleSourceClick = (source: string) => {
         if (!qrValue) return
@@ -48,7 +51,7 @@ export default function CreatePage() {
     }
 
     // Show loading state while checking auth
-    if (!user || loading) {
+    if (authLoading) {
         return (
             <main className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
@@ -57,6 +60,11 @@ export default function CreatePage() {
                 </div>
             </main>
         )
+    }
+
+    // If not logged in, show nothing (or loader) while redirecting
+    if (!user) {
+        return null
     }
 
     // Show access denied if not admin
