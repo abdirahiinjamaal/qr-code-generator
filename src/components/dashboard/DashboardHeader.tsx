@@ -52,24 +52,24 @@ export function DashboardHeader({ links }: DashboardHeaderProps) {
                 <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
                 <p className="text-gray-500 mt-1">Monitor your QR code performance</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3 w-full sm:w-auto">
                 <button
                     onClick={handleExport}
-                    className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm whitespace-nowrap"
                 >
                     <Download className="w-4 h-4" />
                     Export CSV
                 </button>
                 <a
                     href="/"
-                    className="flex items-center gap-2 px-4 py-2 bg-[#ff6602] text-white rounded-xl hover:bg-[#e65a02] transition-colors shadow-sm"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[#ff6602] text-white rounded-xl hover:bg-[#e65a02] transition-colors shadow-sm whitespace-nowrap"
                 >
                     <LinkIcon className="w-4 h-4" />
                     Create New
                 </a>
                 <button
                     onClick={handleLogout}
-                    className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm whitespace-nowrap"
                 >
                     <LogOut className="w-4 h-4" />
                     Logout

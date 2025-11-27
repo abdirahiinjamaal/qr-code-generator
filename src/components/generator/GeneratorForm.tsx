@@ -82,7 +82,7 @@ export function GeneratorForm({ formData, loading, onUpdate, onSubmit }: Generat
                             type="file"
                             accept="image/*"
                             onChange={handleLogoChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#007fff] focus:border-[#007fff] transition-colors text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#ff6602] file:text-white hover:file:bg-[#e65a02]"
+                            className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#ff6602] file:text-white hover:file:bg-[#e65a02] file:w-full sm:file:w-auto mb-2 sm:mb-0"
                         />
                         <p className="text-xs text-gray-500 mt-1">Upload your app logo (PNG, JPG, max 2MB)</p>
                     </div>

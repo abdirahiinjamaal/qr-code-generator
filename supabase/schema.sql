@@ -92,6 +92,7 @@ $$ language plpgsql security definer;
 alter table public.user_roles enable row level security;
 
 -- Allow users to read their own role
+drop policy if exists "Users can view own role" on public.user_roles;
 create policy "Users can view own role"
   on public.user_roles for select
   using (auth.uid() = id);
@@ -100,11 +101,13 @@ create policy "Users can view own role"
 alter table public.links enable row level security;
 
 -- Public can read links (needed for the landing page redirection)
+drop policy if exists "Public read access" on public.links;
 create policy "Public read access"
   on public.links for select
   using (true);
 
 -- Only Admins can create links
+drop policy if exists "Only admins can create links" on public.links;
 create policy "Only admins can create links"
   on public.links for insert
   with check (
@@ -112,6 +115,7 @@ create policy "Only admins can create links"
   );
 
 -- Only Admins can update their own links
+drop policy if exists "Only admins can update own links" on public.links;
 create policy "Only admins can update own links"
   on public.links for update
   using (
@@ -120,6 +124,7 @@ create policy "Only admins can update own links"
   );
 
 -- Only Admins can delete their own links
+drop policy if exists "Only admins can delete own links" on public.links;
 create policy "Only admins can delete own links"
   on public.links for delete
   using (
@@ -131,11 +136,13 @@ create policy "Only admins can delete own links"
 alter table public.clicks enable row level security;
 
 -- Public can insert clicks (when they scan a QR code)
+drop policy if exists "Public can insert clicks" on public.clicks;
 create policy "Public can insert clicks"
   on public.clicks for insert
   with check (true);
 
 -- Only Admins can view clicks (Analytics)
+drop policy if exists "Admins can view clicks" on public.clicks;
 create policy "Admins can view clicks"
   on public.clicks for select
   using (
