@@ -18,11 +18,35 @@ export async function isUserAdmin(): Promise<boolean> {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return false
 
-        const { data, error } = await supabase
+        // Try to get user role
+        let { data, error } = await supabase
             .from('user_roles')
             .select('is_admin')
             .eq('id', user.id)
             .single()
+
+        // If user_roles entry doesn't exist, check if there are ANY admins
+        if (error && error.code === 'PGRST116') {
+            // No entry exists - check if this is the first user (should be admin)
+            const { data: roleCount } = await supabase
+                .from('user_roles')
+                .select('id', { count: 'exact', head: true })
+
+            // If no admins exist at all, make this user an admin automatically
+            const isFirstUser = roleCount === null || (roleCount as any) === 0
+
+            // Create user_roles entry
+            const { error: insertError } = await supabase
+                .from('user_roles')
+                .insert({ id: user.id, is_admin: isFirstUser })
+
+            if (insertError) {
+                console.error('Error creating user_roles entry:', insertError)
+                return false
+            }
+
+            return isFirstUser
+        }
 
         if (error || !data) return false
         return data.is_admin === true
