@@ -24,9 +24,9 @@ export default function Home() {
         handleLogout
     } = useGenerator()
 
-    // Redirect non-admins
+    // Redirect non-admins only after loading is complete
     useEffect(() => {
-        if (user && !isAdmin && !loading) {
+        if (!loading && user && !isAdmin) {
             router.push('/login')
         }
     }, [user, isAdmin, loading, router])
