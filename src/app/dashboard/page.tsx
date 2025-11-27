@@ -1,6 +1,6 @@
 
 'use client'
-
+import toast from 'react-hot-toast'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -19,6 +19,7 @@ import {
     Share2,
     Link as LinkIcon,
     Pencil,
+    LogOut,
     X
 } from 'lucide-react'
 import {
@@ -173,7 +174,8 @@ export default function Dashboard() {
             setEditingLink({ ...editingLink, screenshots: newScreenshots })
         } catch (error) {
             console.error('Error uploading screenshot:', error)
-            alert('❌ Failed to upload screenshot')
+            toast.error('Failed to upload screenshot')
+
         } finally {
             setIsSubmitting(false)
         }
@@ -213,10 +215,12 @@ export default function Dashboard() {
             // Update local state
             setLinks(links.map(l => l.id === editingLink.id ? editingLink : l))
             setEditingLink(null)
-            alert('✅ Link updated successfully!')
+            toast.success('Link updated successfully!')
+
         } catch (error) {
             console.error('Error updating link:', error)
-            alert('❌ Failed to update link')
+            toast.error('Failed to update link')
+
         } finally {
             setIsSubmitting(false)
         }
@@ -349,6 +353,17 @@ export default function Dashboard() {
                             <LinkIcon className="w-4 h-4" />
                             Create New
                         </a>
+                        <button
+                            onClick={async () => {
+                                await supabase.auth.signOut()
+                                toast.success('Logged out successfully')
+                                router.push('/login')
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            Logout
+                        </button>
                     </div>
                 </div>
 
